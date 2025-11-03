@@ -5,17 +5,16 @@ Frontend estático para registrar Empaquetados y Merma, conectado a un Google Ap
 ## Estructura del repo
 
 ```
-/docs/                 # Carpeta publicada por GitHub Pages
-  index.html           # App principal con ambos formularios
-  menu.html            # Pantalla de menú para elegir formulario
-  styles.css           # Estilos
-  script.js            # Envío hacia Apps Script + lógica de formularios
-  BRAND.svg            # Logo de ejemplo (opcional)
-  CODIGOS DESCRIPCION Unidad_Primaria.tsv  # Referencia de productos (opcional)
-/frontend/             # Carpeta original de trabajo (fuente), puedes seguir editando aquí si lo deseas
+/docs/                 # Carpeta publicada por GitHub Pages (única fuente)
+   index.html           # App principal con ambos formularios
+   menu.html            # Pantalla de menú para elegir formulario
+   styles.css           # Estilos
+   script.js            # Envío hacia Apps Script + lógica de formularios
+   BRAND.svg            # Logo de ejemplo (opcional)
+   CODIGOS DESCRIPCION Unidad_Primaria.tsv  # Referencia de productos (opcional)
 ```
 
-GitHub Pages publicará el contenido de `docs/`. Si editas los archivos dentro de `frontend/`, recuerda copiar tus cambios a `docs/` para publicar.
+GitHub Pages publicará el contenido de `docs/`. Se eliminaron duplicados para mantener una sola fuente.
 
 ## Configurar la URL del backend (Apps Script)
 
