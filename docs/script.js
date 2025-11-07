@@ -6,6 +6,17 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz85jSXQjpNtbSSbtiZ
 const APPS_SCRIPT_URL_EMPAQUETADOS = WEB_APP_URL ? WEB_APP_URL + "?sheet=Empaquetado" : "";
 const APPS_SCRIPT_URL_MERMA = WEB_APP_URL ? WEB_APP_URL + "?sheet=Merma" : "";
 
+function generarNonce() {
+    try {
+        if (window.crypto && window.crypto.getRandomValues) {
+            const arr = new Uint32Array(4);
+            window.crypto.getRandomValues(arr);
+            return Array.from(arr).map(n => n.toString(16)).join('');
+        }
+    } catch (_) {}
+    return Date.now().toString(36) + Math.random().toString(36).slice(2);
+}
+
 function enviarFormulario(formId, url) {
     const form = document.getElementById(formId);
     form.addEventListener("submit", function(e) {
@@ -14,7 +25,19 @@ function enviarFormulario(formId, url) {
             document.getElementById("mensaje").textContent = "Configura la URL del Apps Script (WEB_APP_URL)";
             return;
         }
+        // Evitar envíos dobles (doble click, redoble toque)
+        if (form.dataset.submitting === "1") {
+            return; // ya se está enviando
+        }
+        form.dataset.submitting = "1";
+        const submitBtn = form.querySelector('button[type="submit"]');
+        if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = "Enviando..."; }
+        const msgEl = document.getElementById("mensaje");
+        if (msgEl) msgEl.textContent = "Enviando...";
         const datos = new FormData(form);
+        // Idempotencia: token anti-duplicado
+        const nonce = generarNonce();
+        datos.append('nonce', nonce);
         // Agregar solo los productos con cantidad > 0 como JSON
         try {
             const qtyInputs = form.querySelectorAll('.prod-qty');
@@ -45,17 +68,22 @@ function enviarFormulario(formId, url) {
             let txt = await response.text();
             let ok = response.ok;
             try { const j = JSON.parse(txt); ok = j.ok !== undefined ? j.ok : ok; } catch(e) {}
-            document.getElementById("mensaje").textContent = ok ? "¡Formulario enviado correctamente!" : "Error al enviar el formulario.";
+            if (msgEl) msgEl.textContent = ok ? "¡Formulario enviado correctamente!" : "Error al enviar el formulario.";
             form.reset();
             // Limpiar cantidades después de reset si la lista existe
             const qtyInputs = form.querySelectorAll('.prod-qty');
             qtyInputs.forEach(i => i.value = "");
             setTimeout(() => {
-                document.getElementById("mensaje").textContent = "";
+                if (msgEl) msgEl.textContent = "";
             }, 3000);
         })
         .catch(error => {
-            document.getElementById("mensaje").textContent = "Error al enviar el formulario.";
+            if (msgEl) msgEl.textContent = "Error al enviar el formulario.";
+        })
+        .finally(() => {
+            form.dataset.submitting = "0";
+            const btn = form.querySelector('button[type="submit"]');
+            if (btn) { btn.disabled = false; btn.textContent = "Enviar"; }
         });
     });
 }
