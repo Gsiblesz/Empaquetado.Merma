@@ -81,6 +81,12 @@ function enviarFormulario(formId, url) {
             // Consideramos éxito también si la respuesta es no legible pero status 200 (opaque redirect no-cors)
             if (ok || response.status === 0) {
                 if (msgEl) msgEl.textContent = duplicate ? "Registro ya existente (deduplicado)." : "¡Formulario enviado correctamente!";
+                // Disparar evento para página de registros
+                try {
+                    const insertedCount = Array.from(form.querySelectorAll('.prod-qty')).filter(inp => parseInt(inp.value,10)>0).length;
+                    const hoja = url.includes('Empaquetado') ? 'Empaquetado' : (url.includes('Merma') ? 'Merma' : '');
+                    window.dispatchEvent(new CustomEvent('registroInsertado',{ detail:{ sheet:hoja, productos:insertedCount, nonce: form.dataset.nonce || '' }}));
+                } catch(_) {}
                 form.reset();
                 const qtyInputs = form.querySelectorAll('.prod-qty');
                 qtyInputs.forEach(i => i.value = "");

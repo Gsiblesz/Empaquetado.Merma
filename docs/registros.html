@@ -54,9 +54,17 @@
     async function fetchRecent(sheetKey, limit){
       const base = getBaseUrl();
       const url = base + (base.includes('?')?'&':'?') + 'action=recent&sheet=' + encodeURIComponent(sheetKey) + '&limit=' + encodeURIComponent(limit);
-      const r = await fetch(url, { method:'GET', cache:'no-store' });
-      const t = await r.text();
-      try { return JSON.parse(t); } catch(e) { throw new Error('Respuesta no JSON: ' + t.slice(0,160)); }
+      let r, t;
+      try {
+        r = await fetch(url, { method:'GET', cache:'no-store' });
+        t = await r.text();
+      } catch(fetchErr){
+        // Intento no-cors (opaco) solo para detectar alcance del endpoint
+        try { await fetch(url, { method:'GET', mode:'no-cors' }); return { ok:true, headers:[], rows:[], total:0, sheet:sheetKey, opaque:true }; } catch(_){ throw new Error('Failed to fetch endpoint recent: ' + fetchErr.message); }
+      }
+      try { return JSON.parse(t); } catch(e) {
+        throw new Error('Respuesta no JSON (¿falta integrar action=recent en Apps Script?): ' + t.slice(0,160));
+      }
     }
 
     function renderTable(headers, rows){
@@ -96,6 +104,13 @@
     document.getElementById('btn-actualizar').addEventListener('click', cargar);
     document.getElementById('sel-form').addEventListener('change', cargar);
     document.getElementById('sel-limit').addEventListener('change', cargar);
+    // Refrescar automáticamente cuando se inserta un registro desde otro tab
+    window.addEventListener('registroInsertado', (ev)=> {
+      const current = document.getElementById('sel-form').value;
+      if (ev.detail && ev.detail.sheet === current) {
+        cargar();
+      }
+    });
     cargar();
   </script>
 </body>
