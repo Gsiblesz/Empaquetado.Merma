@@ -18,11 +18,20 @@
             <a href="index.html#merma" class="menu-btn merma-btn">MERMA</a>
         </div>
         <div class="menu-footer-corner">
-            <a href="#" class="footer-btn ajustes-btn" onclick="mostrarAppsScriptLink(event)">Ajustes</a>
-            <a href="#" class="footer-btn inicio-btn">Inicio</a>
+            <a href="#" class="footer-btn ajustes-btn" onclick="toggleAjustes(event)">Ajustes</a>
+            <a href="#" class="footer-btn inicio-btn" onclick="location.reload()">Inicio</a>
         </div>
-        <div id="apps-script-link" class="apps-script-link" style="display:none;">
-            Apps Script: <a href="#" target="_blank">[Link estático]</a>
+        <div id="panel-ajustes" class="apps-script-link" style="display:none; flex-direction:column; gap:12px;">
+            <strong>Configuración Backend</strong>
+            <label style="font-size:0.9rem; color:#bfc8e2;">URL Apps Script (termina en /exec):</label>
+            <input id="input-webapp" type="text" placeholder="https://script.google.com/.../exec" style="width:100%; padding:10px 14px; border-radius:10px; border:1px solid #444; background:#23263a; color:#fff;">
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button class="footer-btn" style="padding:10px 16px; font-size:0.9rem;" onclick="guardarURL()">Guardar</button>
+                <button class="footer-btn" style="padding:10px 16px; font-size:0.9rem; background:#2196f3;" onclick="probarConexion()">Probar conexión</button>
+                <button class="footer-btn" style="padding:10px 16px; font-size:0.9rem; background:#43e6b1; color:#23263a;" onclick="cerrarAjustes()">Cerrar</button>
+            </div>
+            <div id="resultado-prueba" style="margin-top:4px; font-size:0.85rem;"></div>
+            <p style="margin-top:8px; font-size:0.7rem; opacity:0.7;">La URL se guarda en localStorage y se aplica al cargar los formularios.</p>
         </div>
     </div>
     <script>
@@ -36,6 +45,14 @@
             }
         });
     });
+
+    // Panel de ajustes dinámico
+    function toggleAjustes(e){ e.preventDefault(); const p=document.getElementById('panel-ajustes'); p.style.display = p.style.display==='none'?'flex':'none'; if(p.style.display==='flex'){cargarURL();}}
+    function cerrarAjustes(){ document.getElementById('panel-ajustes').style.display='none'; }
+    function cargarURL(){ const saved = localStorage.getItem('WEB_APP_URL_DYNAMIC'); const input = document.getElementById('input-webapp'); if(saved) input.value = saved; }
+    function guardarURL(){ const input = document.getElementById('input-webapp'); const url = input.value.trim(); if(!url){mostrarResultado('Ingresa una URL válida', false); return;} localStorage.setItem('WEB_APP_URL_DYNAMIC', url); mostrarResultado('URL guardada', true); }
+    function probarConexion(){ const url = document.getElementById('input-webapp').value.trim(); if(!url){mostrarResultado('Primero guarda una URL', false); return;} const pingUrl = url + (url.includes('?')?'&':'?') + 'ping=test'; mostrarResultado('Probando...', true); fetch(pingUrl, {method:'GET'}).then(r=>r.text()).then(t=>{ try{ const j=JSON.parse(t); if(j.ok){mostrarResultado('Conexión OK', true);} else {mostrarResultado('Respuesta recibida pero ok=false', false);} }catch(e){ mostrarResultado('Respuesta no JSON: ' + t.slice(0,60), false);} }).catch(err=> mostrarResultado('Error: ' + err, false)); }
+    function mostrarResultado(msg, ok){ const el=document.getElementById('resultado-prueba'); el.textContent=msg; el.style.color= ok?'#43e6b1':'#ff7675'; }
     </script>
 </body>
 </html>
