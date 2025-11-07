@@ -113,5 +113,28 @@ function enviarFormulario(formId, url) {
     });
 }
 
+// Limpieza manual de formulario
+function clearForm(formId){
+    const form = document.getElementById(formId);
+    if(!form) return;
+    form.reset();
+    // Limpiar cantidades y contenedores de productos seleccionados
+    const qtyInputs = form.querySelectorAll('.prod-qty');
+    qtyInputs.forEach(i => i.value = "");
+    const contenedores = form.querySelectorAll('.seleccionados');
+    contenedores.forEach(c => c.innerHTML = "");
+    // Limpiar nonce para permitir nuevo envío independiente
+    delete form.dataset.nonce;
+    try { localStorage.removeItem(`nonce_${formId}`); } catch(_) {}
+    const msgEl = document.getElementById('mensaje');
+    if (msgEl) {
+        msgEl.textContent = 'Formulario limpiado.';
+        setTimeout(()=>{ if(msgEl.textContent==='Formulario limpiado.') msgEl.textContent=''; },2000);
+    }
+    // Restaurar texto del botón si estaba en otro estado
+    const btn = form.querySelector('button[type="submit"]');
+    if(btn) btn.textContent = 'Enviar';
+}
+
 enviarFormulario("empaquetados-form", APPS_SCRIPT_URL_EMPAQUETADOS);
 enviarFormulario("merma-form", APPS_SCRIPT_URL_MERMA);

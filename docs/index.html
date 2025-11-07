@@ -70,7 +70,10 @@
                         </div>
                     </div>
                 </div>
-                <button type="submit">Enviar</button>
+                <div class="form-actions" style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
+                    <button type="submit">Enviar</button>
+                    <button type="button" class="secondary" onclick="clearForm('empaquetados-form')">Limpiar</button>
+                </div>
             </form>
             <script>
             // Render de productos con cantidad al lado + utilidades de fecha/hora
@@ -506,7 +509,10 @@
                         </div>
                     </div>
                 </div>
-                <button type="submit">Enviar</button>
+                <div class="form-actions" style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
+                    <button type="submit">Enviar</button>
+                    <button type="button" class="secondary" onclick="clearForm('merma-form')">Limpiar</button>
+                </div>
             </form>
             <script>
             // Estructura de MERMA con fecha/hora y selección de productos
