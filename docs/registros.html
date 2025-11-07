@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registros recientes</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .reg-controls { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin: 10px 0 16px; }
+    .reg-table { width:100%; overflow:auto; border-radius:10px; border:1px solid #3a3f5a; }
+    table { width:100%; border-collapse:collapse; }
+    th, td { padding:10px 12px; border-bottom:1px solid #2e334d; font-size:0.9rem; }
+    th { text-align:left; background:#1e2235; position:sticky; top:0; }
+    .badge { padding:2px 8px; border-radius:999px; background:#2e8b57; color:#fff; font-size:0.75rem; }
+    .muted { opacity:.7; font-size:.85rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Registros recientes</h1>
+    <div style="text-align:center; margin-bottom:16px;">
+      <a href="menu.html" class="volver-menu">&#8592; Volver al menú</a>
+    </div>
+
+    <div class="reg-controls">
+      <label>Formulario:
+        <select id="sel-form">
+          <option value="Empaquetado">Empaquetados</option>
+          <option value="Merma">Merma</option>
+        </select>
+      </label>
+      <label>Límite:
+        <select id="sel-limit">
+          <option>10</option>
+          <option selected>20</option>
+          <option>50</option>
+        </select>
+      </label>
+      <button id="btn-actualizar" class="btn-small">Actualizar</button>
+      <span id="estado" class="muted"></span>
+    </div>
+
+    <div class="reg-table">
+      <table id="tabla">
+        <thead></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+  <script>
+    const DEFAULT_URL = "https://script.google.com/macros/s/AKfycbz_Cv6V864cVkAhTF3TwtfQXkoAt6C5FguuUnj6GSvTY6IJnhLBloikHDFQaalvswfIoA/exec";
+    function getBaseUrl(){ return (localStorage.getItem('WEB_APP_URL_DYNAMIC')||'').trim() || DEFAULT_URL; }
+
+    async function fetchRecent(sheetKey, limit){
+      const base = getBaseUrl();
+      const url = base + (base.includes('?')?'&':'?') + 'action=recent&sheet=' + encodeURIComponent(sheetKey) + '&limit=' + encodeURIComponent(limit);
+      const r = await fetch(url, { method:'GET', cache:'no-store' });
+      const t = await r.text();
+      try { return JSON.parse(t); } catch(e) { throw new Error('Respuesta no JSON: ' + t.slice(0,160)); }
+    }
+
+    function renderTable(headers, rows){
+      const thead = document.querySelector('#tabla thead');
+      const tbody = document.querySelector('#tabla tbody');
+      thead.innerHTML = '';
+      tbody.innerHTML = '';
+      const trh = document.createElement('tr');
+      (headers||[]).forEach(h=>{ const th=document.createElement('th'); th.textContent=h; trh.appendChild(th); });
+      thead.appendChild(trh);
+      (rows||[]).forEach(obj=>{
+        const tr=document.createElement('tr');
+        (headers||[]).forEach(h=>{ const td=document.createElement('td'); td.textContent = (obj[h]!==undefined && obj[h]!==null) ? obj[h] : ''; tr.appendChild(td); });
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function cargar(){
+      const selForm = document.getElementById('sel-form').value;
+      const limit = parseInt(document.getElementById('sel-limit').value, 10) || 20;
+      const estado = document.getElementById('estado');
+      estado.textContent = 'Cargando...';
+      try{
+        const data = await fetchRecent(selForm, limit);
+        if(!data || data.ok !== true){
+          estado.textContent = 'Error al cargar (' + (data && data.error ? data.error : 'ok=false') + ')';
+          return;
+        }
+        renderTable(data.headers, data.rows);
+        const when = new Date().toLocaleString();
+        estado.innerHTML = 'Mostrando ' + (data.rows?data.rows.length:0) + ' de ' + (data.total||'') + ' • ' + selForm + ' • <span class="badge">actualizado ' + when + '</span>';
+      }catch(err){
+        estado.textContent = 'Error: ' + err.message;
+      }
+    }
+
+    document.getElementById('btn-actualizar').addEventListener('click', cargar);
+    document.getElementById('sel-form').addEventListener('change', cargar);
+    document.getElementById('sel-limit').addEventListener('change', cargar);
+    cargar();
+  </script>
+</body>
+</html>
