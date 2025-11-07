@@ -70,23 +70,29 @@ function enviarFormulario(formId, url) {
         .then(async (response) => {
             let txt = await response.text();
             let ok = response.ok;
-            try { const j = JSON.parse(txt); ok = j.ok !== undefined ? j.ok : ok; } catch(e) {}
+            try { const j = JSON.parse(txt); ok = j.ok !== undefined ? j.ok : ok; } catch(e) { /* response no JSON */ }
             if (msgEl) msgEl.textContent = ok ? "¡Formulario enviado correctamente!" : "Error al enviar el formulario.";
             form.reset();
             // Limpiar cantidades después de reset si la lista existe
             const qtyInputs = form.querySelectorAll('.prod-qty');
             qtyInputs.forEach(i => i.value = "");
+            // Vaciar lista de productos seleccionados para nuevo llenado
+            const contenedores = form.querySelectorAll('.seleccionados');
+            contenedores.forEach(c => c.innerHTML = "");
             setTimeout(() => {
                 if (msgEl) msgEl.textContent = "";
             }, 3000);
         })
         .catch(error => {
-            if (msgEl) msgEl.textContent = "Error al enviar el formulario.";
+            if (msgEl) msgEl.textContent = "Error al enviar el formulario. Verifica conexión y permisos del Web App.";
         })
         .finally(() => {
-            form.dataset.submitting = "0";
-            const btn = form.querySelector('button[type="submit"]');
-            if (btn) { btn.disabled = false; btn.textContent = "Enviar"; }
+            // Pequeño enfriamiento para evitar reenvío inmediato
+            setTimeout(() => {
+                form.dataset.submitting = "0";
+                const btn = form.querySelector('button[type="submit"]');
+                if (btn) { btn.disabled = false; btn.textContent = "Enviar"; }
+            }, 800);
         });
     });
 }

@@ -51,7 +51,26 @@
     function cerrarAjustes(){ document.getElementById('panel-ajustes').style.display='none'; }
     function cargarURL(){ const saved = localStorage.getItem('WEB_APP_URL_DYNAMIC'); const input = document.getElementById('input-webapp'); if(saved) input.value = saved; }
     function guardarURL(){ const input = document.getElementById('input-webapp'); const url = input.value.trim(); if(!url){mostrarResultado('Ingresa una URL válida', false); return;} localStorage.setItem('WEB_APP_URL_DYNAMIC', url); mostrarResultado('URL guardada', true); }
-    function probarConexion(){ const url = document.getElementById('input-webapp').value.trim(); if(!url){mostrarResultado('Primero guarda una URL', false); return;} const pingUrl = url + (url.includes('?')?'&':'?') + 'ping=test'; mostrarResultado('Probando...', true); fetch(pingUrl, {method:'GET'}).then(r=>r.text()).then(t=>{ try{ const j=JSON.parse(t); if(j.ok){mostrarResultado('Conexión OK', true);} else {mostrarResultado('Respuesta recibida pero ok=false', false);} }catch(e){ mostrarResultado('Respuesta no JSON: ' + t.slice(0,60), false);} }).catch(err=> mostrarResultado('Error: ' + err, false)); }
+        function probarConexion(){
+            const url = document.getElementById('input-webapp').value.trim();
+            if(!url){mostrarResultado('Primero guarda una URL', false); return;}
+            const pingUrl = url + (url.includes('?')?'&':'?') + 'ping=test';
+            mostrarResultado('Probando...', true);
+            fetch(pingUrl, { method:'GET', cache:'no-store' })
+                .then(r=> r.text())
+                .then(t=>{
+                    try{
+                        const j=JSON.parse(t);
+                        if(j.ok){ mostrarResultado('Conexión OK', true); }
+                        else { mostrarResultado('Respuesta recibida pero ok=false', false); }
+                    }catch(e){
+                        mostrarResultado('Respuesta no JSON: ' + t.slice(0,120), false);
+                    }
+                })
+                .catch(err=> {
+                    mostrarResultado('Failed to fetch. Verifica que el Web App esté desplegado como "Anyone" y la URL termine en /exec. Detalle: ' + err, false);
+                });
+        }
     function mostrarResultado(msg, ok){ const el=document.getElementById('resultado-prueba'); el.textContent=msg; el.style.color= ok?'#43e6b1':'#ff7675'; }
     </script>
 </body>
