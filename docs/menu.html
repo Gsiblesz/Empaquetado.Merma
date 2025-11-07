@@ -48,9 +48,9 @@
         });
     });
 
-        // Panel de ajustes dinámico
-        // Clave de administrador (cámbiala a tu gusto). Nota: esto sólo obfusca; no es seguridad real del lado servidor.
-        const ADMIN_KEY = 'PDT-2025';
+    // Panel de ajustes dinámico
+    // Clave de administrador estática (solo control básico en cliente; no seguridad real).
+    const ADMIN_KEY = 'PASANTIAS90';
     function toggleAjustes(e){ e.preventDefault(); const p=document.getElementById('panel-ajustes'); p.style.display = p.style.display==='none'?'flex':'none'; if(p.style.display==='flex'){cargarURL();}}
     function cerrarAjustes(){ document.getElementById('panel-ajustes').style.display='none'; }
     function cargarURL(){ const saved = localStorage.getItem('WEB_APP_URL_DYNAMIC'); const input = document.getElementById('input-webapp'); if(saved) input.value = saved; }
