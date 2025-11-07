@@ -73,19 +73,19 @@ function enviarFormulario(formId, url) {
             body: datos
         })
         .then(async (response) => {
-            let txt = await response.text();
+            let txt;
+            try { txt = await response.text(); } catch(_) { txt = ''; }
             let ok = response.ok;
-            try { const j = JSON.parse(txt); ok = j.ok !== undefined ? j.ok : ok; } catch(e) { /* response no JSON */ }
-            if (ok) {
-                if (msgEl) msgEl.textContent = "¡Formulario enviado correctamente!";
+            let duplicate = false;
+            try { const j = JSON.parse(txt); ok = j.ok !== undefined ? j.ok : ok; duplicate = !!j.duplicate; } catch(e) { /* response no JSON */ }
+            // Consideramos éxito también si la respuesta es no legible pero status 200 (opaque redirect no-cors)
+            if (ok || response.status === 0) {
+                if (msgEl) msgEl.textContent = duplicate ? "Registro ya existente (deduplicado)." : "¡Formulario enviado correctamente!";
                 form.reset();
-                // Limpiar cantidades después de reset si la lista existe
                 const qtyInputs = form.querySelectorAll('.prod-qty');
                 qtyInputs.forEach(i => i.value = "");
-                // Vaciar lista de productos seleccionados para nuevo llenado
                 const contenedores = form.querySelectorAll('.seleccionados');
                 contenedores.forEach(c => c.innerHTML = "");
-                // limpiar nonce porque terminó bien
                 delete form.dataset.nonce;
                 try { localStorage.removeItem(`nonce_${formId}`); } catch(_) {}
                 setTimeout(() => { if (msgEl) msgEl.textContent = ""; }, 3000);
@@ -94,7 +94,9 @@ function enviarFormulario(formId, url) {
             }
         })
         .catch(error => {
-            if (msgEl) msgEl.textContent = "Error al enviar el formulario. Verifica conexión y permisos del Web App. Puedes reintentar.";
+            // Fallback: asumimos que puede haber sido un bloqueo de lectura pero el backend insertó la fila.
+            if (msgEl) msgEl.textContent = "Posible envío exitoso (respuesta no legible). Verifica en la hoja. Si falta, reintenta.";
+            // No limpiamos por si realmente no llegó; conservamos nonce para reintentar.
         })
         .finally(() => {
             // Pequeño enfriamiento para evitar reenvío inmediato

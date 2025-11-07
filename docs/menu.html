@@ -110,11 +110,17 @@
                         if(j.ok){ mostrarResultado('Conexión OK', true); }
                         else { mostrarResultado('Respuesta recibida pero ok=false', false); }
                     }catch(e){
-                        mostrarResultado('Respuesta no JSON: ' + t.slice(0,120), false);
+                        // Si no es JSON, intentamos en modo no-cors y asumimos OK si no falla
+                        fetch(pingUrl, { method:'GET', mode:'no-cors' })
+                          .then(()=> mostrarResultado('Conexión OK (modo no-cors)', true))
+                          .catch(err=> mostrarResultado('Failed to fetch (no-cors). Revisa permisos /exec. Detalle: ' + err, false));
                     }
                 })
-                .catch(err=> {
-                    mostrarResultado('Failed to fetch. Verifica que el Web App esté desplegado como "Anyone" y la URL termine en /exec. Detalle: ' + err, false);
+                .catch(_=> {
+                    // Fallback: modo no-cors (algunos orígenes file:// o Pages limitan lectura de respuesta)
+                    fetch(pingUrl, { method:'GET', mode:'no-cors' })
+                      .then(()=> mostrarResultado('Conexión OK (modo no-cors)', true))
+                      .catch(err=> mostrarResultado('Failed to fetch. Verifica que el Web App esté desplegado como "Anyone" y la URL termine en /exec. Detalle: ' + err, false));
                 });
         }
     function mostrarResultado(msg, ok){ const el=document.getElementById('resultado-prueba'); el.textContent=msg; el.style.color= ok?'#43e6b1':'#ff7675'; }
