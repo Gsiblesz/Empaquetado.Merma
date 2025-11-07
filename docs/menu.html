@@ -25,6 +25,8 @@
             <strong>Configuración Backend</strong>
             <label style="font-size:0.9rem; color:#bfc8e2;">URL Apps Script (termina en /exec):</label>
             <input id="input-webapp" type="text" placeholder="https://script.google.com/.../exec" style="width:100%; padding:10px 14px; border-radius:10px; border:1px solid #444; background:#23263a; color:#fff;">
+            <label style="font-size:0.9rem; color:#bfc8e2;">Clave (requerida para guardar cambios):</label>
+            <input id="input-key" type="password" placeholder="Ingresa la clave de administrador" style="width:100%; padding:10px 14px; border-radius:10px; border:1px solid #444; background:#23263a; color:#fff;">
             <div style="display:flex; gap:8px; flex-wrap:wrap;">
                 <button class="footer-btn" style="padding:10px 16px; font-size:0.9rem;" onclick="guardarURL()">Guardar</button>
                 <button class="footer-btn" style="padding:10px 16px; font-size:0.9rem; background:#2196f3;" onclick="probarConexion()">Probar conexión</button>
@@ -46,11 +48,25 @@
         });
     });
 
-    // Panel de ajustes dinámico
+        // Panel de ajustes dinámico
+        // Clave de administrador (cámbiala a tu gusto). Nota: esto sólo obfusca; no es seguridad real del lado servidor.
+        const ADMIN_KEY = 'PDT-2025';
     function toggleAjustes(e){ e.preventDefault(); const p=document.getElementById('panel-ajustes'); p.style.display = p.style.display==='none'?'flex':'none'; if(p.style.display==='flex'){cargarURL();}}
     function cerrarAjustes(){ document.getElementById('panel-ajustes').style.display='none'; }
     function cargarURL(){ const saved = localStorage.getItem('WEB_APP_URL_DYNAMIC'); const input = document.getElementById('input-webapp'); if(saved) input.value = saved; }
-    function guardarURL(){ const input = document.getElementById('input-webapp'); const url = input.value.trim(); if(!url){mostrarResultado('Ingresa una URL válida', false); return;} localStorage.setItem('WEB_APP_URL_DYNAMIC', url); mostrarResultado('URL guardada', true); }
+        function guardarURL(){
+            const input = document.getElementById('input-webapp');
+            const keyIn = document.getElementById('input-key');
+            const url = input.value.trim();
+            const key = (keyIn.value || '').trim();
+            if(!url){ mostrarResultado('Ingresa una URL válida', false); return; }
+            if(!key){ mostrarResultado('Ingresa la clave para guardar', false); return; }
+            if(key !== ADMIN_KEY){ mostrarResultado('Clave incorrecta', false); return; }
+            localStorage.setItem('WEB_APP_URL_DYNAMIC', url);
+            // Borrar clave del input por seguridad básica
+            keyIn.value = '';
+            mostrarResultado('URL guardada', true);
+        }
         function probarConexion(){
             const url = document.getElementById('input-webapp').value.trim();
             if(!url){mostrarResultado('Primero guarda una URL', false); return;}
