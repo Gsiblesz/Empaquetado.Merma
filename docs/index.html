@@ -49,6 +49,14 @@
                             <option value="Odalis">Odalis</option>
                         </select>
                     </div>
+                    <div class="field">
+                        <label for="empa-sede">Sede:</label>
+                        <select id="empa-sede" name="sede" required class="select">
+                            <option value="">Selecciona una sede</option>
+                            <option>PANIFICADORA COSTA DORADA, C.A.</option>
+                            <option>ALIMENTOS PB2, C.A.</option>
+                        </select>
+                    </div>
                 </div>
                 <!-- Productos y cantidades -->
                 <div class="productos-section">
@@ -412,7 +420,7 @@
                     row.innerHTML = `
                         <div class="prod-name"><strong>${p.codigo}</strong> — ${p.desc}</div>
                         <div class="qty-actions">
-                            <input type="number" min="1" step="1" class="prod-qty" placeholder="0" data-codigo="${p.codigo}" name="qty_${p.codigo}">
+                            <input type="number" min="1" step="1" class="prod-qty" placeholder="0" data-codigo="${p.codigo}" data-desc="${p.desc.replace(/"/g, '&quot;')}" data-unidad="${p.unidad}" name="qty_${p.codigo}">
                             <button type="button" class="remove-sel">✕</button>
                         </div>
                     `;
@@ -437,8 +445,8 @@
                         <input type="text" id="merma-hora" name="hora" placeholder="Hora" readonly class="hora-input">
                     </div>
                     <div class="field">
-                        <label for="merma-registro">Número de registro:</label>
-                        <input type="text" id="merma-registro" name="registro" required>
+                        <label for="merma-lote">Número de lote:</label>
+                        <input type="text" id="merma-lote" name="lote" required>
                     </div>
                     <div class="field">
                         <label for="merma-responsable">Responsable:</label>
@@ -479,8 +487,8 @@
                         </select>
                     </div>
                     <div class="field">
-                        <label for="merma-empresa">Sede:</label>
-                        <select id="merma-empresa" name="empresa" required class="select">
+                        <label for="merma-sede">Sede:</label>
+                        <select id="merma-sede" name="sede" required class="select">
                             <option value="">Selecciona una sede</option>
                             <option>PANIFICADORA COSTA DORADA, C.A.</option>
                             <option>ALIMENTOS PB2, C.A.</option>
@@ -828,7 +836,7 @@
                     row.innerHTML = `
                         <div class="prod-name"><strong>${p.codigo}</strong> — ${p.desc}</div>
                         <div class="qty-actions">
-                            <input type="number" min="1" step="1" class="prod-qty" placeholder="0" data-codigo="${p.codigo}" name="qty_${p.codigo}">
+                            <input type="number" min="1" step="1" class="prod-qty" placeholder="0" data-codigo="${p.codigo}" data-desc="${p.desc.replace(/"/g, '&quot;')}" data-unidad="${p.unidad}" name="qty_${p.codigo}">
                             <button type="button" class="remove-sel">✕</button>
                         </div>`;
                     row.querySelector('.remove-sel').addEventListener('click', ()=>row.remove());

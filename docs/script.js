@@ -22,7 +22,12 @@ function enviarFormulario(formId, url) {
             qtyInputs.forEach(inp => {
                 const val = parseInt(inp.value, 10);
                 if (!isNaN(val) && val > 0) {
-                    seleccionados.push({ codigo: inp.dataset.codigo, cantidad: val });
+                    seleccionados.push({
+                        codigo: inp.dataset.codigo,
+                        descripcion: inp.dataset.desc || '',
+                        unidad: inp.dataset.unidad || '',
+                        cantidad: val
+                    });
                 }
             });
             if (seleccionados.length) {
