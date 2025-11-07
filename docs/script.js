@@ -38,8 +38,13 @@ function enviarFormulario(formId, url) {
         const msgEl = document.getElementById("mensaje");
         if (msgEl) msgEl.textContent = "Enviando...";
         const datos = new FormData(form);
-        // Idempotencia: token anti-duplicado
-        const nonce = generarNonce();
+        // Idempotencia: token anti-duplicado (reutiliza el mismo nonce en reintentos)
+        let nonce = form.dataset.nonce || localStorage.getItem(`nonce_${formId}`) || '';
+        if (!nonce) {
+            nonce = generarNonce();
+            form.dataset.nonce = nonce;
+            try { localStorage.setItem(`nonce_${formId}`, nonce); } catch(_) {}
+        }
         datos.append('nonce', nonce);
         // Agregar solo los productos con cantidad > 0 como JSON
         try {
@@ -71,27 +76,36 @@ function enviarFormulario(formId, url) {
             let txt = await response.text();
             let ok = response.ok;
             try { const j = JSON.parse(txt); ok = j.ok !== undefined ? j.ok : ok; } catch(e) { /* response no JSON */ }
-            if (msgEl) msgEl.textContent = ok ? "¡Formulario enviado correctamente!" : "Error al enviar el formulario.";
-            form.reset();
-            // Limpiar cantidades después de reset si la lista existe
-            const qtyInputs = form.querySelectorAll('.prod-qty');
-            qtyInputs.forEach(i => i.value = "");
-            // Vaciar lista de productos seleccionados para nuevo llenado
-            const contenedores = form.querySelectorAll('.seleccionados');
-            contenedores.forEach(c => c.innerHTML = "");
-            setTimeout(() => {
-                if (msgEl) msgEl.textContent = "";
-            }, 3000);
+            if (ok) {
+                if (msgEl) msgEl.textContent = "¡Formulario enviado correctamente!";
+                form.reset();
+                // Limpiar cantidades después de reset si la lista existe
+                const qtyInputs = form.querySelectorAll('.prod-qty');
+                qtyInputs.forEach(i => i.value = "");
+                // Vaciar lista de productos seleccionados para nuevo llenado
+                const contenedores = form.querySelectorAll('.seleccionados');
+                contenedores.forEach(c => c.innerHTML = "");
+                // limpiar nonce porque terminó bien
+                delete form.dataset.nonce;
+                try { localStorage.removeItem(`nonce_${formId}`); } catch(_) {}
+                setTimeout(() => { if (msgEl) msgEl.textContent = ""; }, 3000);
+            } else {
+                if (msgEl) msgEl.textContent = "Error al enviar el formulario. Puedes reintentar.";
+            }
         })
         .catch(error => {
-            if (msgEl) msgEl.textContent = "Error al enviar el formulario. Verifica conexión y permisos del Web App.";
+            if (msgEl) msgEl.textContent = "Error al enviar el formulario. Verifica conexión y permisos del Web App. Puedes reintentar.";
         })
         .finally(() => {
             // Pequeño enfriamiento para evitar reenvío inmediato
             setTimeout(() => {
                 form.dataset.submitting = "0";
                 const btn = form.querySelector('button[type="submit"]');
-                if (btn) { btn.disabled = false; btn.textContent = "Enviar"; }
+                if (btn) {
+                    btn.disabled = false;
+                    // Si hay nonce activo, ofrecer reintento; si no, volver a "Enviar"
+                    btn.textContent = (form.dataset.nonce || localStorage.getItem(`nonce_${formId}`)) ? "Reintentar" : "Enviar";
+                }
             }, 800);
         });
     });
