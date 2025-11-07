@@ -23,17 +23,20 @@
         </div>
         <div id="panel-ajustes" class="apps-script-link" style="display:none; flex-direction:column; gap:12px;">
             <strong>Configuración Backend</strong>
-            <label style="font-size:0.9rem; color:#bfc8e2;">URL Apps Script (termina en /exec):</label>
-            <input id="input-webapp" type="text" placeholder="https://script.google.com/.../exec" style="width:100%; padding:10px 14px; border-radius:10px; border:1px solid #444; background:#23263a; color:#fff;">
-            <label style="font-size:0.9rem; color:#bfc8e2;">Clave (requerida para guardar cambios):</label>
-            <input id="input-key" type="password" placeholder="Ingresa la clave de administrador" style="width:100%; padding:10px 14px; border-radius:10px; border:1px solid #444; background:#23263a; color:#fff;">
-            <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                <button class="footer-btn" style="padding:10px 16px; font-size:0.9rem;" onclick="guardarURL()">Guardar</button>
-                <button class="footer-btn" style="padding:10px 16px; font-size:0.9rem; background:#2196f3;" onclick="probarConexion()">Probar conexión</button>
-                <button class="footer-btn" style="padding:10px 16px; font-size:0.9rem; background:#43e6b1; color:#23263a;" onclick="cerrarAjustes()">Cerrar</button>
+            <label style="font-size:0.9rem; color:#bfc8e2;">Clave (para desbloquear la URL):</label>
+            <input id="input-key" type="password" placeholder="Ingresa la clave" style="width:100%; padding:10px 14px; border-radius:10px; border:1px solid #444; background:#23263a; color:#fff;">
+            <button class="footer-btn" style="padding:10px 12px; font-size:0.8rem; background:#ffb347; color:#23263a; width:max-content;" onclick="desbloquearURL()">Desbloquear URL</button>
+            <div id="url-block" style="display:none; flex-direction:column; gap:8px;">
+                <label style="font-size:0.9rem; color:#bfc8e2;">URL Apps Script (termina en /exec):</label>
+                <input id="input-webapp" type="text" placeholder="https://script.google.com/.../exec" style="width:100%; padding:10px 14px; border-radius:10px; border:1px solid #444; background:#23263a; color:#fff;">
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <button class="footer-btn" style="padding:10px 16px; font-size:0.9rem;" onclick="guardarURL()">Guardar</button>
+                    <button class="footer-btn" style="padding:10px 16px; font-size:0.9rem; background:#2196f3;" onclick="probarConexion()">Probar conexión</button>
+                </div>
             </div>
+            <button class="footer-btn" style="padding:10px 16px; font-size:0.9rem; background:#43e6b1; color:#23263a;" onclick="cerrarAjustes()">Cerrar</button>
             <div id="resultado-prueba" style="margin-top:4px; font-size:0.85rem;"></div>
-            <p style="margin-top:8px; font-size:0.7rem; opacity:0.7;">La URL se guarda en localStorage y se aplica al cargar los formularios.</p>
+            <p style="margin-top:8px; font-size:0.7rem; opacity:0.7;">La URL se guarda en localStorage y se aplica al cargar los formularios. La clave solo desbloquea la visibilidad.</p>
         </div>
     </div>
     <script>
@@ -51,25 +54,52 @@
     // Panel de ajustes dinámico
     // Clave de administrador estática (solo control básico en cliente; no seguridad real).
     const ADMIN_KEY = 'PASANTIAS90';
-    function toggleAjustes(e){ e.preventDefault(); const p=document.getElementById('panel-ajustes'); p.style.display = p.style.display==='none'?'flex':'none'; if(p.style.display==='flex'){cargarURL();}}
-    function cerrarAjustes(){ document.getElementById('panel-ajustes').style.display='none'; }
+    function toggleAjustes(e){
+        e.preventDefault();
+        const p=document.getElementById('panel-ajustes');
+        const wasHidden = p.style.display==='none';
+        p.style.display = wasHidden?'flex':'none';
+        if(wasHidden){
+            // Reset estado cada vez que se abre
+            document.getElementById('input-key').value='';
+            document.getElementById('resultado-prueba').textContent='';
+            ocultarBloqueURL();
+        }
+    }
+    function cerrarAjustes(){
+        document.getElementById('panel-ajustes').style.display='none';
+        document.getElementById('input-key').value='';
+        ocultarBloqueURL();
+    }
     function cargarURL(){ const saved = localStorage.getItem('WEB_APP_URL_DYNAMIC'); const input = document.getElementById('input-webapp'); if(saved) input.value = saved; }
+    function ocultarBloqueURL(){ const b=document.getElementById('url-block'); if(b) b.style.display='none'; }
+    function desbloquearURL(){
+        const keyIn = document.getElementById('input-key');
+        const key = (keyIn.value||'').trim();
+        if(!key){ mostrarResultado('Ingresa la clave', false); return; }
+        if(key !== ADMIN_KEY){ mostrarResultado('Clave incorrecta', false); return; }
+        const block = document.getElementById('url-block');
+        block.style.display='flex';
+        cargarURL();
+        mostrarResultado('Bloque desbloqueado', true);
+    }
         function guardarURL(){
+            // Sólo se permite guardar si el bloque está visible (clave correcta ingresada)
+            const block = document.getElementById('url-block');
+            if(block.style.display==='none'){ mostrarResultado('Primero desbloquea con la clave', false); return; }
             const input = document.getElementById('input-webapp');
-            const keyIn = document.getElementById('input-key');
             const url = input.value.trim();
-            const key = (keyIn.value || '').trim();
             if(!url){ mostrarResultado('Ingresa una URL válida', false); return; }
-            if(!key){ mostrarResultado('Ingresa la clave para guardar', false); return; }
-            if(key !== ADMIN_KEY){ mostrarResultado('Clave incorrecta', false); return; }
             localStorage.setItem('WEB_APP_URL_DYNAMIC', url);
-            // Borrar clave del input por seguridad básica
-            keyIn.value = '';
             mostrarResultado('URL guardada', true);
         }
         function probarConexion(){
-            const url = document.getElementById('input-webapp').value.trim();
-            if(!url){mostrarResultado('Primero guarda una URL', false); return;}
+            // Permite probar aunque el bloque esté oculto usando valor guardado
+            const blockVisible = document.getElementById('url-block').style.display!=='none';
+            let url = '';
+            if(blockVisible){ url = document.getElementById('input-webapp').value.trim(); }
+            if(!url){ url = (localStorage.getItem('WEB_APP_URL_DYNAMIC')||'').trim(); }
+            if(!url){ mostrarResultado('No hay URL: desbloquea y guarda primero', false); return; }
             const pingUrl = url + (url.includes('?')?'&':'?') + 'ping=test';
             mostrarResultado('Probando...', true);
             fetch(pingUrl, { method:'GET', cache:'no-store' })
