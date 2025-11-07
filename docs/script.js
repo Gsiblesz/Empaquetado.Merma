@@ -1,6 +1,6 @@
 // Configura aquí la URL de tu Apps Script Web App (deployment URL que termina en /exec)
 // Ejemplo: const WEB_APP_URL = "https://script.google.com/macros/s/AKfycby.../exec";
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbygvu8qFAekQ4HFuSQY0lF2S-lu1m-8JPvn7_gNkx9Ytmnu0GfOx0rCH7HYxsIIjAUvjw/exec"; // URL de despliegue
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz85jSXQjpNtbSSbtiZTqBj19XF2ayn7s9WeP8bGpeGeVS5gFnz55T2k7veGajKC1Yprg/exec"; // URL de despliegue (actualizado)
 
 // Endpoints por hoja (el Apps Script espera ?sheet=Empaquetado | ?sheet=Merma)
 const APPS_SCRIPT_URL_EMPAQUETADOS = WEB_APP_URL ? WEB_APP_URL + "?sheet=Empaquetado" : "";
