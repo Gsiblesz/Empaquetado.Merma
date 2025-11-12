@@ -89,32 +89,7 @@
                         </div>
                         <input type="text" id="merma-hora" name="hora" placeholder="Hora" readonly class="hora-input" />
                     </div>
-                    <div class="field">
-                        <label for="merma-motivo">Motivo:</label>
-                        <select id="merma-motivo" name="motivo" required class="select">
-                            <option value="">Selecciona una opción</option>
-                            <option>MANCHADOS</option>
-                            <option>ERROR DE PROCESO</option>
-                            <option>MAL FORMADO (HORNEADO)</option>
-                            <option>QUEMADO</option>
-                            <option>APLASTADOS</option>
-                            <option>ROTOS</option>
-                            <option>CAIDOS AL PISO</option>
-                            <option>FERMENTADO</option>
-                            <option>ALVEOLO</option>
-                            <option>CRUDO</option>
-                            <option>MAL FORMADO (BOLEADO)</option>
-                            <option>MAL CORTE</option>
-                            <option>OTROS</option>
-                            <option>ADHERIDO A LA BANDEJA</option>
-                            <option>DESMOLDADO</option>
-                            <option>SOBRANTE BUEN ESTADO</option>
-                            <option>PEQUEÑOS EN TAMAÑO</option>
-                            <option>VIRUTA</option>
-                            <option>SOBREPASA EL TAMAÑO ADECUADO</option>
-                            <option>ADHERIDO AL MOLDE</option>
-                        </select>
-                    </div>
+                    <!-- Motivo se pedirá por cada producto seleccionado -->
                     <div class="field">
                         <label for="merma-sede">Sede:</label>
                         <select id="merma-sede" name="sede" required class="select">
@@ -123,10 +98,7 @@
                             <option>ALIMENTOS PB2, C.A.</option>
                         </select>
                     </div>
-                    <div class="field">
-                        <label for="merma-lote">Número de lote:</label>
-                        <input type="text" id="merma-lote" name="lote" required />
-                    </div>
+                    <!-- Número de lote se pedirá por cada producto seleccionado -->
                     <div class="field">
                         <label for="merma-responsable">Responsable:</label>
                         <select id="merma-responsable" name="responsable" required class="select">
@@ -166,6 +138,30 @@
         function getBaseUrl(){
             return (localStorage.getItem('WEB_APP_URL_DYNAMIC')||'').trim() || "https://script.google.com/macros/s/AKfycbxOro1KA6gOszvEXQlfCdI99PPGdxrB5Z7n7XJsZSj_YW8aKEPHoUww1Hb_5W5reF0LUA/exec";
         }
+        function opcionesMotivoHTML(){
+            return `
+                <option value="">Motivo…</option>
+                <option>MANCHADOS</option>
+                <option>ERROR DE PROCESO</option>
+                <option>MAL FORMADO (HORNEADO)</option>
+                <option>QUEMADO</option>
+                <option>APLASTADOS</option>
+                <option>ROTOS</option>
+                <option>CAIDOS AL PISO</option>
+                <option>FERMENTADO</option>
+                <option>ALVEOLO</option>
+                <option>CRUDO</option>
+                <option>MAL FORMADO (BOLEADO)</option>
+                <option>MAL CORTE</option>
+                <option>OTROS</option>
+                <option>ADHERIDO A LA BANDEJA</option>
+                <option>DESMOLDADO</option>
+                <option>SOBRANTE BUEN ESTADO</option>
+                <option>PEQUEÑOS EN TAMAÑO</option>
+                <option>VIRUTA</option>
+                <option>SOBREPASA EL TAMAÑO ADECUADO</option>
+                <option>ADHERIDO AL MOLDE</option>`;
+        }
         async function cargarProductos(){
             if(PRODUCTOS_CACHE.length) return PRODUCTOS_CACHE;
             const base = getBaseUrl();
@@ -202,6 +198,7 @@
             const btn = document.getElementById(prefix+'-btn-agregar-producto');
             const contSel = document.getElementById(prefix+'-productos-seleccionados');
             if(!panel||!buscar||!lista||!btn||!contSel) return;
+            const isMerma = prefix === 'merma';
             function render(term=''){
                 const t = term.trim().toLowerCase();
                 lista.innerHTML='';
@@ -226,15 +223,18 @@
                 const row = document.createElement('div');
                 row.className='sel-row producto-line';
                 row.dataset.codigo = p.codigo;
-                row.innerHTML = `
+                const baseInputs = `
                     <div class="prod-name"><strong>${p.codigo}</strong> — ${p.desc}</div>
-                    <div class="qty-actions">
+                    <div class="qty-actions" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
                         <input type="number" min="1" step="1" class="prod-qty" placeholder="0"
                             data-codigo="${p.codigo}"
                             data-desc="${(p.desc||'').replace(/"/g,'&quot;')}"
                             data-unidad="${p.unidad}" name="qty_${p.codigo}">
+                        ${isMerma ? `<select class="merma-motivo select" style="min-width:210px;">${opcionesMotivoHTML()}</select>
+                        <input type="text" class="merma-lote" placeholder="Lote" style="min-width:120px;"/>` : ''}
                         <button type="button" class="remove-sel">✕</button>
                     </div>`;
+                row.innerHTML = baseInputs;
                 row.querySelector('.remove-sel').addEventListener('click', ()=>row.remove());
                 contSel.appendChild(row);
                 row.querySelector('.prod-qty').focus();

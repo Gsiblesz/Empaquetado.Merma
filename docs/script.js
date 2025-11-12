@@ -38,6 +38,15 @@ function enviarFormulario(formId, url) {
         const msgEl = document.getElementById("mensaje");
         if (msgEl) msgEl.textContent = "Enviando...";
         const datos = new FormData(form);
+        // Formatear fecha a dd-mm-aaaa si viene como yyyy-mm-dd
+        try {
+            const fechaInput = form.querySelector('input[name="fecha"]');
+            const raw = fechaInput ? (fechaInput.value||'').trim() : '';
+            if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+                const [y,m,d] = raw.split('-');
+                datos.set('fecha', `${d}-${m}-${y}`);
+            }
+        } catch(_) { /* no-op */ }
         // Idempotencia: token anti-duplicado (reutiliza el mismo nonce en reintentos)
         let nonce = form.dataset.nonce || localStorage.getItem(`nonce_${formId}`) || '';
         if (!nonce) {
@@ -53,11 +62,16 @@ function enviarFormulario(formId, url) {
             qtyInputs.forEach(inp => {
                 const val = parseInt(inp.value, 10);
                 if (!isNaN(val) && val > 0) {
+                    const row = inp.closest('.producto-line');
+                    const motivoEl = row ? row.querySelector('.merma-motivo') : null;
+                    const loteEl = row ? row.querySelector('.merma-lote') : null;
                     seleccionados.push({
                         codigo: inp.dataset.codigo,
                         descripcion: inp.dataset.desc || '',
                         unidad: inp.dataset.unidad || '',
-                        cantidad: val
+                        cantidad: val,
+                        motivo: motivoEl ? (motivoEl.value||'') : '',
+                        lote: loteEl ? (loteEl.value||'') : ''
                     });
                 }
             });
