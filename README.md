@@ -22,7 +22,7 @@ GitHub Pages publicará el contenido de `docs/`. Se eliminaron duplicados para m
 En `docs/script.js` está esta constante:
 
 ```js
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbygvu8qFAekQ4HFuSQY0lF2S-lu1m-8JPvn7_gNkx9Ytmnu0GfOx0rCH7HYxsIIjAUvjw/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzNw7ko-872o3NPxXxN8pnsEoviYdG2JhWJNh5tK1k4KTHv-1m8qDUm9pjgQVGfEJyACg/exec";
 ```
 
 Sustitúyela por tu URL de despliegue si cambia (termina en `/exec`). El resto se arma solo.

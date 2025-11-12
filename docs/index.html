@@ -147,7 +147,7 @@
     (function(){
         let PRODUCTOS_CACHE = [];
         function getBaseUrl(){
-            return (localStorage.getItem('WEB_APP_URL_DYNAMIC')||'').trim() || "https://script.google.com/macros/s/AKfycbwAX2Ye9AvI6ZLd8n8ert8lwZAEY-1YmItafzfzxHzsTJNgj0W14Ydaoyw7QMr0dtGeQg/exec";
+            return (localStorage.getItem('WEB_APP_URL_DYNAMIC')||'').trim() || "https://script.google.com/macros/s/AKfycbzNw7ko-872o3NPxXxN8pnsEoviYdG2JhWJNh5tK1k4KTHv-1m8qDUm9pjgQVGfEJyACg/exec";
         }
         async function cargarProductos(){
             if (PRODUCTOS_CACHE.length) return PRODUCTOS_CACHE;
