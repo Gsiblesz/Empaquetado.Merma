@@ -15,6 +15,7 @@
     <div class="productos-actions">
       <button id="btn-refrescar" class="btn-small" style="width:auto;">Refrescar lista</button>
       <button id="btn-toggle-nuevo" class="btn-small" style="width:auto;">Agregar nuevo</button>
+      <input type="text" id="buscar" placeholder="Buscar código o descripción" style="margin-left:8px; flex:1; min-width:220px;" />
     </div>
     <div id="nuevo-form" style="display:none;" class="nuevo-form">
       <h3>Nuevo Producto</h3>
@@ -44,6 +45,7 @@
       const ADMIN_KEY = 'PASANTIAS90'; // misma clave cliente (protege el endpoint para agregar)
   const URL_BASE = (localStorage.getItem('WEB_APP_URL_DYNAMIC')||'').trim() || "https://script.google.com/macros/s/AKfycbzNw7ko-872o3NPxXxN8pnsEoviYdG2JhWJNh5tK1k4KTHv-1m8qDUm9pjgQVGfEJyACg/exec";
       let cache = [];
+    let filtro = '';
       const cuerpo = document.querySelector('#tabla-productos tbody');
       const estado = document.getElementById('estado-carga');
   function endpointProductos(){ return URL_BASE + (URL_BASE.includes('?')?'&':'?') + 'action=productos'; }
@@ -57,12 +59,15 @@
           let j; try{ j = JSON.parse(t); }catch(e){ j = {}; }
           cache = Array.isArray(j.products) ? j.products : [];
           render();
-          estado.textContent = cache.length + ' productos';
         } catch(e){ estado.textContent = 'Error al cargar'; cuerpo.innerHTML=''; }
       }
       function render(){
         cuerpo.innerHTML = '';
-        cache.forEach(p => {
+        const term = filtro.trim().toLowerCase();
+        const data = term
+          ? cache.filter(p => (String(p.codigo||'').toLowerCase().includes(term) || String(p.descripcion||p.desc||'').toLowerCase().includes(term)))
+          : cache;
+        data.forEach(p => {
            const tr = document.createElement('tr');
            tr.innerHTML = `<td>${p.codigo}</td><td>${p.descripcion||p.desc||''}</td><td>${p.unidad}</td>
                            <td><button class="btn-small danger" data-cod="${p.codigo}">Eliminar</button></td>`;
@@ -70,6 +75,7 @@
            btn.addEventListener('click', ()=> eliminar(p.codigo));
            cuerpo.appendChild(tr);
         });
+        estado.textContent = `Mostrando ${data.length} de ${cache.length} productos`;
       }
       async function eliminar(codigo){
         if(!codigo) return;
@@ -82,7 +88,7 @@
         try{
           const r = await fetch(endpointDelete(), {method:'POST', body: fd});
           const t = await r.text(); let j; try{ j = JSON.parse(t);}catch(_){ j={ok:r.ok}; }
-          if(j.ok){ await cargar(); estado.textContent = 'Producto eliminado'; setTimeout(()=>estado.textContent= cache.length + ' productos', 1000); }
+          if(j.ok){ await cargar(); estado.textContent = 'Producto eliminado'; setTimeout(()=>render(), 900); }
           else { estado.textContent = 'No se pudo eliminar (verifica código/clave)'; }
         }catch(e){ estado.textContent = 'Error de conexión'; }
       }
@@ -111,6 +117,8 @@
         const box = document.getElementById('nuevo-form');
         box.style.display = box.style.display==='none' ? 'block' : 'none';
       });
+      const buscar = document.getElementById('buscar');
+      buscar.addEventListener('input', () => { filtro = buscar.value; render(); });
       document.getElementById('p-guardar').addEventListener('click', guardar);
       cargar();
   })();
