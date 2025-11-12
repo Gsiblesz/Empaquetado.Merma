@@ -91,7 +91,18 @@ function enviarFormulario(formId, url) {
             try { txt = await response.text(); } catch(_) { txt = ''; }
             let ok = response.ok;
             let duplicate = false;
-            try { const j = JSON.parse(txt); ok = j.ok !== undefined ? j.ok : ok; duplicate = !!j.duplicate; } catch(e) { /* response no JSON */ }
+            let errorMsg = '';
+            let parsed = null;
+            try {
+                parsed = JSON.parse(txt);
+                if (parsed.ok !== undefined) ok = parsed.ok;
+                duplicate = !!parsed.duplicate;
+                if (!ok && parsed.error) errorMsg = parsed.error;
+            } catch(e) {
+                // texto no JSON; mantener valores por defecto
+            }
+            // Log detallado para depuración
+            try { console.log('[ENVIAR_FORM]', formId, 'status:', response.status, 'okFlag:', ok, 'duplicate:', duplicate, 'raw:', txt); } catch(_) {}
             // Consideramos éxito también si la respuesta es no legible pero status 200 (opaque redirect no-cors)
             if (ok || response.status === 0) {
                 if (msgEl) msgEl.textContent = duplicate ? "Registro ya existente (deduplicado)." : "¡Formulario enviado correctamente!";
@@ -110,12 +121,20 @@ function enviarFormulario(formId, url) {
                 try { localStorage.removeItem(`nonce_${formId}`); } catch(_) {}
                 setTimeout(() => { if (msgEl) msgEl.textContent = ""; }, 3000);
             } else {
-                if (msgEl) msgEl.textContent = "Error al enviar el formulario. Puedes reintentar.";
+                // Mostrar mensaje específico si lo tenemos
+                if (!errorMsg && parsed && !parsed.ok && !parsed.error) {
+                    errorMsg = 'Error desconocido (respuesta JSON sin ok=true).';
+                }
+                if (!errorMsg && !parsed && response.status !== 200) {
+                    errorMsg = 'HTTP '+response.status+' sin detalle del servidor.';
+                }
+                if (msgEl) msgEl.textContent = "Error al enviar el formulario. " + (errorMsg ? ("Detalle: "+ errorMsg) : "Puedes reintentar.");
             }
         })
         .catch(error => {
             // Fallback: asumimos que puede haber sido un bloqueo de lectura pero el backend insertó la fila.
             if (msgEl) msgEl.textContent = "Posible envío exitoso (respuesta no legible). Verifica en la hoja. Si falta, reintenta.";
+            try { console.error('[ENVIAR_FORM][ERROR]', formId, error); } catch(_) {}
             // No limpiamos por si realmente no llegó; conservamos nonce para reintentar.
         })
         .finally(() => {
