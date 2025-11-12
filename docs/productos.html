@@ -32,7 +32,7 @@
     <div class="tabla-wrapper">
       <table id="tabla-productos" class="tabla-productos">
         <thead>
-          <tr><th>Código</th><th>Descripción</th><th>Unidad</th></tr>
+          <tr><th>Código</th><th>Descripción</th><th>Unidad</th><th>Acciones</th></tr>
         </thead>
         <tbody></tbody>
       </table>
@@ -46,8 +46,9 @@
       let cache = [];
       const cuerpo = document.querySelector('#tabla-productos tbody');
       const estado = document.getElementById('estado-carga');
-      function endpointProductos(){ return URL_BASE + (URL_BASE.includes('?')?'&':'?') + 'action=productos'; }
-      function endpointAdd(){ return URL_BASE + (URL_BASE.includes('?')?'&':'?') + 'action=addProduct'; }
+  function endpointProductos(){ return URL_BASE + (URL_BASE.includes('?')?'&':'?') + 'action=productos'; }
+  function endpointAdd(){ return URL_BASE + (URL_BASE.includes('?')?'&':'?') + 'action=addProduct'; }
+  function endpointDelete(){ return URL_BASE + (URL_BASE.includes('?')?'&':'?') + 'action=deleteProduct'; }
       async function cargar(){
         estado.textContent = 'Cargando...';
         try {
@@ -63,9 +64,27 @@
         cuerpo.innerHTML = '';
         cache.forEach(p => {
            const tr = document.createElement('tr');
-           tr.innerHTML = `<td>${p.codigo}</td><td>${p.descripcion||p.desc||''}</td><td>${p.unidad}</td>`;
+           tr.innerHTML = `<td>${p.codigo}</td><td>${p.descripcion||p.desc||''}</td><td>${p.unidad}</td>
+                           <td><button class="btn-small danger" data-cod="${p.codigo}">Eliminar</button></td>`;
+           const btn = tr.querySelector('button[data-cod]');
+           btn.addEventListener('click', ()=> eliminar(p.codigo));
            cuerpo.appendChild(tr);
         });
+      }
+      async function eliminar(codigo){
+        if(!codigo) return;
+        const ok = confirm(`¿Eliminar el producto "${codigo}" del catálogo?`);
+        if(!ok) return;
+        estado.textContent = 'Eliminando...';
+        const fd = new FormData();
+        fd.append('codigo', codigo);
+        fd.append('adminKey', ADMIN_KEY);
+        try{
+          const r = await fetch(endpointDelete(), {method:'POST', body: fd});
+          const t = await r.text(); let j; try{ j = JSON.parse(t);}catch(_){ j={ok:r.ok}; }
+          if(j.ok){ await cargar(); estado.textContent = 'Producto eliminado'; setTimeout(()=>estado.textContent= cache.length + ' productos', 1000); }
+          else { estado.textContent = 'No se pudo eliminar (verifica código/clave)'; }
+        }catch(e){ estado.textContent = 'Error de conexión'; }
       }
       async function guardar(){
         const codigo = document.getElementById('p-codigo').value.trim();
