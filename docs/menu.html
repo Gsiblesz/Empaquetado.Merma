@@ -19,7 +19,7 @@
         </div>
         <div class="menu-footer-corner">
             <a href="#" class="footer-btn ajustes-btn" onclick="toggleAjustes(event)">Ajustes</a>
-            <a href="registros.html" class="footer-btn" style="background:#2196f3;">Registros</a>
+            <a href="#" class="footer-btn" style="background:#2196f3;" onclick="openRegistros(event)">Registros</a>
             <a href="#" class="footer-btn" style="background:#43e6b1; color:#23263a;" onclick="openProductos(event)">Productos</a>
             <a href="#" class="footer-btn inicio-btn" onclick="location.reload()">Inicio</a>
         </div>
@@ -74,6 +74,18 @@
         const keyInput = document.getElementById('input-key');
         if(keyInput) keyInput.focus();
     }
+    function openRegistros(e){
+        e.preventDefault();
+        if(isAdminUnlocked()) { window.location.href = 'registros.html'; return; }
+        const p = document.getElementById('panel-ajustes');
+        p.style.display = 'flex';
+        const res = document.getElementById('resultado-prueba');
+        res.textContent = 'Ingresa la clave para acceder a Registros';
+        res.style.color = '#ffb347';
+        try { sessionStorage.setItem('GOTO_REGISTROS','1'); } catch(_) {}
+        const keyInput = document.getElementById('input-key');
+        if(keyInput) keyInput.focus();
+    }
     function toggleAjustes(e){
         e.preventDefault();
         const p=document.getElementById('panel-ajustes');
@@ -112,6 +124,10 @@
             if(sessionStorage.getItem('GOTO_PRODUCTOS') === '1'){
                 sessionStorage.removeItem('GOTO_PRODUCTOS');
                 window.location.href = 'productos.html';
+            }
+            if(sessionStorage.getItem('GOTO_REGISTROS') === '1'){
+                sessionStorage.removeItem('GOTO_REGISTROS');
+                window.location.href = 'registros.html';
             }
         } catch(_) {}
     }

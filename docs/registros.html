@@ -122,17 +122,39 @@
       }
     }
 
+    function normalizeHeaders(headers){
+      // Quitar celdas vacías o generadas "Column X"
+      return (headers||[]).filter(h => {
+        const txt = String(h||'').trim();
+        if(!txt) return false;
+        if(/^column\s*\d+$/i.test(txt)) return false;
+        return true;
+      });
+    }
+    function fmtValue(val, header){
+      // Formatear posibles fechas ISO a hora local (America/Caracas)
+      const tz = 'America/Caracas';
+      const str = String(val||'');
+      if(/\d{4}-\d{2}-\d{2}t\d{2}:\d{2}:\d{2}/i.test(str) || /Z$/.test(str)){
+        const d = new Date(str);
+        if(!isNaN(d.getTime())){
+          return d.toLocaleString('es-VE', { timeZone: tz, year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit' });
+        }
+      }
+      return val === undefined || val === null ? '' : val;
+    }
     function renderTable(headers, rows){
       const thead = document.querySelector('#tabla thead');
       const tbody = document.querySelector('#tabla tbody');
       thead.innerHTML = '';
       tbody.innerHTML = '';
+      const cleanHeaders = normalizeHeaders(headers);
       const trh = document.createElement('tr');
-      (headers||[]).forEach(h=>{ const th=document.createElement('th'); th.textContent=h; trh.appendChild(th); });
+      cleanHeaders.forEach(h=>{ const th=document.createElement('th'); th.textContent=h; trh.appendChild(th); });
       thead.appendChild(trh);
       (rows||[]).forEach(obj=>{
         const tr=document.createElement('tr');
-        (headers||[]).forEach(h=>{ const td=document.createElement('td'); td.textContent = (obj[h]!==undefined && obj[h]!==null) ? obj[h] : ''; tr.appendChild(td); });
+        cleanHeaders.forEach(h=>{ const td=document.createElement('td'); td.textContent = fmtValue(obj[h], h); tr.appendChild(td); });
         tbody.appendChild(tr);
       });
     }
