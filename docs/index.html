@@ -68,16 +68,7 @@
                         </div>
                     </div>
                     <div class="add-catalogo-wrapper" style="margin-top:8px;">
-                        <button type="button" id="toggle-nuevo-prod" class="btn-small">Agregar al catálogo</button>
-                        <div id="nuevo-prod-box" style="display:none; margin-top:6px;" class="panel-productos">
-                            <div class="inline" style="gap:8px; flex-wrap:wrap;">
-                                <input type="text" id="np-codigo" placeholder="Código" />
-                                <input type="text" id="np-desc" placeholder="Descripción" />
-                                <input type="text" id="np-unidad" placeholder="Unidad (PAQ/UND)" />
-                                <button type="button" id="np-guardar" class="btn-small">Guardar</button>
-                            </div>
-                            <small id="np-msg" style="color:#bfc8e2"></small>
-                        </div>
+                        <!-- Botón de agregar al catálogo removido del formulario de Empaquetados. Gestiona productos desde productos.html -->
                     </div>
                 </div>
                 <div class="form-actions" style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
@@ -102,11 +93,23 @@
                         <label for="merma-motivo">Motivo:</label>
                         <select id="merma-motivo" name="motivo" required class="select">
                             <option value="">Selecciona una opción</option>
-                            <option>QUEMADOS</option>
-                            <option>DEFORMES</option>
+                            <option>MANCHADOS</option>
+                            <option>ERROR DE PROCESO</option>
+                            <option>MAL FORMADO (HORNEADO)</option>
+                            <option>QUEMADO</option>
+                            <option>APLASTADOS</option>
+                            <option>ROTOS</option>
+                            <option>CAIDOS AL PISO</option>
+                            <option>FERMENTADO</option>
+                            <option>ALVEOLO</option>
+                            <option>CRUDO</option>
+                            <option>MAL FORMADO (BOLEADO)</option>
+                            <option>MAL CORTE</option>
+                            <option>OTROS</option>
+                            <option>ADHERIDO A LA BANDEJA</option>
                             <option>DESMOLDADO</option>
                             <option>SOBRANTE BUEN ESTADO</option>
-                            <option>PEQUEÑOS  EN TAMAÑO</option>
+                            <option>PEQUEÑOS EN TAMAÑO</option>
                             <option>VIRUTA</option>
                             <option>SOBREPASA EL TAMAÑO ADECUADO</option>
                             <option>ADHERIDO AL MOLDE</option>
@@ -118,6 +121,22 @@
                             <option value="">Selecciona una sede</option>
                             <option>PANIFICADORA COSTA DORADA, C.A.</option>
                             <option>ALIMENTOS PB2, C.A.</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="merma-lote">Número de lote:</label>
+                        <input type="text" id="merma-lote" name="lote" required />
+                    </div>
+                    <div class="field">
+                        <label for="merma-responsable">Responsable:</label>
+                        <select id="merma-responsable" name="responsable" required class="select">
+                            <option value="">Selecciona un responsable</option>
+                            <option>Alexander Guevara</option>
+                            <option>Yefrin Arteaga</option>
+                            <option>Leandro Gil</option>
+                            <option>Jesus Alcedo</option>
+                            <option>Eliezer N</option>
+                            <option>Odalis</option>
                         </select>
                     </div>
                 </div>
@@ -145,7 +164,7 @@
     (function(){
         let PRODUCTOS_CACHE = [];
         function getBaseUrl(){
-            return (localStorage.getItem('WEB_APP_URL_DYNAMIC')||'').trim() || "https://script.google.com/macros/s/AKfycbzNw7ko-872o3NPxXxN8pnsEoviYdG2JhWJNh5tK1k4KTHv-1m8qDUm9pjgQVGfEJyACg/exec";
+            return (localStorage.getItem('WEB_APP_URL_DYNAMIC')||'').trim() || "https://script.google.com/macros/s/AKfycbyDK26GtO5auvb6eFCinKTiuJl8ZLRwTO0_8GElgid0jaIIajqakPQLTNwPlhoDsREy5w/exec";
         }
         async function cargarProductos(){
             if(PRODUCTOS_CACHE.length) return PRODUCTOS_CACHE;
@@ -265,65 +284,8 @@
             window.__empaPanel = initPanel('empa');
             window.__mermaPanel = initPanel('merma');
             await refreshPanels();
-            const toggleNuevo = document.getElementById('toggle-nuevo-prod');
-            const boxNuevo = document.getElementById('nuevo-prod-box');
-            if(toggleNuevo) toggleNuevo.addEventListener('click', ()=>{ boxNuevo.style.display = boxNuevo.style.display==='none' ? 'block':'none'; });
-            const guardarBtn = document.getElementById('np-guardar');
-            if(guardarBtn) guardarBtn.addEventListener('click', guardarNuevoProducto);
         });
     })();
-    </script>
-</body>
-</html>
-                        item.innerHTML = `<strong>${p.codigo}</strong> — ${p.desc}`;
-                        item.addEventListener('click', ()=>addProducto(p));
-                        panelLista.appendChild(item);
-                    });
-                }
-                panelBuscar.addEventListener('input', ()=>renderPanel(panelBuscar.value));
-                function openPanel(){ panel.style.display='block'; panelBuscar.value=''; refreshProductsAndRender(''); panelBuscar.focus(); }
-                function closePanel(){ panel.style.display='none'; }
-                btnAgregar.addEventListener('click', ()=>{ panel.style.display!=='none'?closePanel():openPanel(); });
-                document.addEventListener('click', (e)=>{ if(!panel.contains(e.target) && e.target!==btnAgregar) closePanel(); });
-                document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closePanel(); });
-                function addProducto(p) {
-                    const existente = seleccionados.querySelector(`.sel-row[data-codigo="${p.codigo}"] input.prod-qty`);
-                    if (existente) { existente.focus(); closePanel(); return; }
-                    const row = document.createElement('div');
-                    row.className='sel-row producto-line';
-                    row.dataset.codigo = p.codigo;
-                    row.innerHTML = `
-                        <div class="prod-name"><strong>${p.codigo}</strong> — ${p.desc}</div>
-                        <div class="qty-actions">
-                            <input type="number" min="1" step="1" class="prod-qty" placeholder="0" data-codigo="${p.codigo}" data-desc="${p.desc.replace(/"/g, '&quot;')}" data-unidad="${p.unidad}" name="qty_${p.codigo}">
-                            <button type="button" class="remove-sel">✕</button>
-                        </div>`;
-                    row.querySelector('.remove-sel').addEventListener('click', ()=>row.remove());
-                    seleccionados.appendChild(row);
-                    row.querySelector('.prod-qty').focus();
-                    closePanel();
-                }
-            });
-            </script>
-        </div>
-        <div id="mensaje"></div>
-    </div>
-    <script src="script.js"></script>
-    <script>
-    // Mostrar solo el formulario seleccionado al entrar desde el menú
-    window.onload = function() {
-        const empaDiv = document.getElementById('form-empaquetados');
-        const mermaDiv = document.getElementById('form-merma');
-        empaDiv.style.display = 'none';
-        mermaDiv.style.display = 'none';
-        const abrirTab = localStorage.getItem('abrirTab');
-        if (abrirTab === 'empaquetados') {
-            empaDiv.style.display = '';
-        } else if (abrirTab === 'merma') {
-            mermaDiv.style.display = '';
-        }
-        localStorage.removeItem('abrirTab');
-    }
     </script>
 </body>
 </html>
