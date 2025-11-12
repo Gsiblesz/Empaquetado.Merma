@@ -1,5 +1,41 @@
 <!DOCTYPE html>
 <html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Formularios Empaquetado y Merma</title>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+    <div class="container">
+        <h1>Registro de Formularios</h1>
+        <div style="text-align:center; margin-bottom:20px;">
+            <a href="menu.html" class="volver-menu">&#8592; Volver al menú</a>
+        </div>
+        <div class="form-section" id="form-empaquetados" style="display:none;">
+            <h2>EMPAQUETADOS</h2>
+            <form id="empaquetados-form">
+                <div class="compact-grid">
+                    <div class="field">
+                        <label for="empa-fecha">Fecha:</label>
+                        <div class="inline">
+                            <input type="date" id="empa-fecha" name="fecha" required />
+                            <button type="button" id="empa-btn-fecha-hoy" class="btn-small">Hoy</button>
+                        </div>
+                        <input type="text" id="empa-hora" name="hora" placeholder="Hora" readonly class="hora-input" />
+                    </div>
+                    <div class="field">
+                        <label for="empa-entregado">Entregado a:</label>
+                        <select id="empa-entregado" name="entregado" required class="select">
+                            <option value="">Selecciona una opción</option>
+                            <option>K FOOD</option>
+                            <option>DESPACHO</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="empa-registro">Número de registro:</label>
+                        <input type="text" id="empa-registro" name="registro" required />
+                    </div>
                     <div class="field">
                         <label for="empa-responsable">Responsable:</label>
                         <select id="empa-responsable" name="responsable" required class="select">
@@ -50,7 +86,6 @@
                 </div>
             </form>
         </div>
-        <!-- MERMA -->
         <div class="form-section" id="form-merma" style="display:none;">
             <h2>MERMA</h2>
             <form id="merma-form">
@@ -113,14 +148,14 @@
             return (localStorage.getItem('WEB_APP_URL_DYNAMIC')||'').trim() || "https://script.google.com/macros/s/AKfycbzNw7ko-872o3NPxXxN8pnsEoviYdG2JhWJNh5tK1k4KTHv-1m8qDUm9pjgQVGfEJyACg/exec";
         }
         async function cargarProductos(){
-            if (PRODUCTOS_CACHE.length) return PRODUCTOS_CACHE;
+            if(PRODUCTOS_CACHE.length) return PRODUCTOS_CACHE;
             const base = getBaseUrl();
             const url = base + (base.includes('?')?'&':'?') + 'action=productos';
             try {
                 const r = await fetch(url, {method:'GET', cache:'no-store'});
                 const text = await r.text();
                 const j = JSON.parse(text);
-                PRODUCTOS_CACHE = Array.isArray(j.products) ? j.products.map(p=>({codigo: p.codigo, desc: p.descripcion, unidad: p.unidad})) : [];
+                PRODUCTOS_CACHE = Array.isArray(j.products) ? j.products.map(p=>({codigo:p.codigo, desc:p.descripcion, unidad:p.unidad})) : [];
             } catch(e){ PRODUCTOS_CACHE = []; }
             return PRODUCTOS_CACHE;
         }
@@ -175,10 +210,10 @@
                 row.innerHTML = `
                     <div class="prod-name"><strong>${p.codigo}</strong> — ${p.desc}</div>
                     <div class="qty-actions">
-               <input type="number" min="1" step="1" class="prod-qty" placeholder="0"
-                   data-codigo="${p.codigo}"
-                   data-desc="${(p.desc||'').replace(/"/g,'&quot;')}"
-                               data-unidad="${p.unidad}" name="qty_${p.codigo}">
+                        <input type="number" min="1" step="1" class="prod-qty" placeholder="0"
+                            data-codigo="${p.codigo}"
+                            data-desc="${(p.desc||'').replace(/"/g,'&quot;')}"
+                            data-unidad="${p.unidad}" name="qty_${p.codigo}">
                         <button type="button" class="remove-sel">✕</button>
                     </div>`;
                 row.querySelector('.remove-sel').addEventListener('click', ()=>row.remove());
@@ -211,21 +246,19 @@
             try {
                 const r = await fetch(url, {method:'POST', body: fd});
                 const t = await r.text(); let j; try{ j=JSON.parse(t);}catch(_){ j={ok:r.ok}; }
-                if(j.ok){ msg.textContent='Guardado'; PRODUCTOS_CACHE=[]; await refreshPanels(); setTimeout(()=>{ msg.textContent=''; document.getElementById('np-codigo').value=''; document.getElementById('np-desc').value=''; },1200); }
-                else msg.textContent='Error al guardar';
+                if(j.ok){
+                    msg.textContent='Guardado'; PRODUCTOS_CACHE=[]; await refreshPanels();
+                    setTimeout(()=>{ msg.textContent=''; document.getElementById('np-codigo').value=''; document.getElementById('np-desc').value=''; },1200);
+                } else msg.textContent='Error al guardar';
             } catch(e){ msg.textContent='Error de conexión'; }
         }
         document.addEventListener('DOMContentLoaded', async ()=>{
             const abrirTab = localStorage.getItem('abrirTab');
             const empaDiv = document.getElementById('form-empaquetados');
             const mermaDiv = document.getElementById('form-merma');
-            if(abrirTab==='empaquetados') {
-                empaDiv.style.display='';
-            } else if(abrirTab==='merma') {
-                mermaDiv.style.display='';
-            } else {
-                empaDiv.style.display='';
-            }
+            if(abrirTab==='empaquetados') empaDiv.style.display='';
+            else if(abrirTab==='merma') mermaDiv.style.display='';
+            else empaDiv.style.display='';
             localStorage.removeItem('abrirTab');
             initFecha('empa');
             initFecha('merma');
@@ -242,197 +275,6 @@
     </script>
 </body>
 </html>
-{codigo:'PTEM0103',desc:'PAN TIPO CHINO 45 GR  6 UND',unidad:'PAQ'},
-{codigo:'PTEM0120',desc:'MINI PANETTONE 90 GR',unidad:'PAQ'},
-{codigo:'PTEM0165',desc:'CANILLA ARTESANAL 210 GR 1 UND WAB',unidad:'UND'},
-{codigo:'PTEM0166',desc:'PAN DE HAMBURGUESA TIPO BRIOCHE 85 GR 6 UND W A24',unidad:'PAQ'},
-{codigo:'PTEM0169',desc:'CANILLON ARTESANAL 310 GR 1 UND WAB',unidad:'UND'},
-{codigo:'PTEM0196',desc:'PAN GRANJERO ESPECIAL 75 GR 5 UND',unidad:'PAQ'},
-{codigo:'PTEM0175',desc:'PAN DE HAMBURGUESA ESPECIAL TIPO BRIOCHE 100 GR WAB A18',unidad:'PAQ'},
-{codigo:'PTEM0110',desc:'BAGEL AJONJOLI 105 GR 4 UND',unidad:'PAQ'},
-{codigo:'PTEM0157',desc:'CHOCO COOKIES 5 UND PAQ',unidad:'PAQ'},
-{codigo:'PTEM0143',desc:'JALLAH',unidad:'PAQ'},
-{codigo:'PTEM0053',desc:'PAN DE HAMBURGUESA ESPECIAL 75 GR 6 UND AB A24',unidad:'PAQ'},
-{codigo:'PTEM0052',desc:'PAN DE HAMBURGUESA ESPECIAL 75 GR 6 UND WAM A24',unidad:'PAQ'},
-{codigo:'PTEM0051',desc:'PAN DE HAMBURGUESA ESPECIAL 75 GR 6 UND WAN A24',unidad:'PAQ'},
-{codigo:'PTEM0102',desc:'PAN DE HAMBURGUESA ESPECIAL 85 GR 6 UND AB',unidad:'PAQ'},
-{codigo:'PTEM0106',desc:'PAN INTEGRAL 700 GR 1 UND',unidad:'PAQ'},
-{codigo:'PTEM0153',desc:'PAN TIPO CHINO 12 UND',unidad:'PAQ'},
-{codigo:'PTEM0135',desc:'TEQUEÑOS 30 UND',unidad:'PAQ'},
-{codigo:'PTEM0099',desc:'PAN DE HAMBURGUESA BJ 95 GR 6 UND WAB A 21',unidad:'PAQ'},
-{codigo:'PTEM0014',desc:'PAN DE HAMBURGUESA COLORES 95 GR 6 UND',unidad:'PAQ'},
-{codigo:'PTEM0011',desc:'PAN DE HAMBURGUESA ECON 60 GR 6 UND',unidad:'PAQ'},
-{codigo:'PTEM0031',desc:'PAN DE HAMBURGUESA ESPECIAL 100 GR 4 UND AB A18',unidad:'PAQ'},
-{codigo:'PTEM0028',desc:'PAN DE HAMBURGUESA ESPECIAL 100 GR 4 UND WAB A18',unidad:'PAQ'},
-{codigo:'PTEM0019',desc:'PAN DE HAMBURGUESA ESPECIAL 140 GR 4 UND WAN A18',unidad:'PAQ'},
-{codigo:'PTEM0018',desc:'PAN DE HAMBURGUESA ESPECIAL 150 GR 4 UND WAB',unidad:'PAQ'},
-{codigo:'PTEM0016',desc:'PAN DE HAMBURGUESA ESPECIAL 170 GR 2 UND WAN',unidad:'PAQ'},
-{codigo:'PTEM0062',desc:'PAN DE HAMBURGUESA ESPECIAL 45 GR 12 UND WAB A36',unidad:'PAQ'},
-{codigo:'PTEM0055',desc:'PAN DE HAMBURGUESA ESPECIAL 65 GR 6 UND WAM A24',unidad:'PAQ'},
-{codigo:'PTEM0040',desc:'PAN DE HAMBURGUESA ESPECIAL 85 GR 6 UND',unidad:'PAQ'},
-{codigo:'PTEM0042',desc:'PAN DE HAMBURGUESA ESPECIAL 85 GR 6 UND A21',unidad:'PAQ'},
-{codigo:'PTEM0041',desc:'PAN DE HAMBURGUESA ESPECIAL 85 GR 6 UND AB A21',unidad:'PAQ'},
-{codigo:'PTEM0063',desc:'PAN DE HAMBURGUESA MINI 40 GR 12 UND',unidad:'PAQ'},
-{codigo:'PTEM0067',desc:'PAN DE HAMBURGUESA MINI ESPECIAL 30 GR 15 UND',unidad:'PAQ'},
-{codigo:'PTEM0068',desc:'PAN DE HAMBURGUESA MINI ESPECIAL 30 GR 15 UND WAN',unidad:'PAQ'},
-{codigo:'PTEM0064',desc:'PAN DE HAMBURGUESA MINI ESPECIAL 40 GR 12 UND WAB',unidad:'PAQ'},
-{codigo:'PTEM0066',desc:'PAN DE HAMBURGUESA MINI ESPECIAL 40 GR 12 UND WAM',unidad:'PAQ'},
-{codigo:'PTEM0065',desc:'PAN DE HAMBURGUESA MINI ESPECIAL 40 GR 12 UND WAN',unidad:'PAQ'},
-{codigo:'PTEM0084',desc:'PAN DE HAMBURGUESA TIPO BRIOCHE 110 GR 4 UND WAM A241',unidad:'PAQ'},
-{codigo:'PTEM0096',desc:'PAN DE HAMBURGUESA TIPO BRIOCHE 45 GR 12 UND WAN',unidad:'PAQ'},
-{codigo:'PTEM0091',desc:'PAN DE HAMBURGUESA TIPO BRIOCHE 85 GR 6 UND WAN A24',unidad:'PAQ'},
-{codigo:'PTEM0093',desc:'PAN DE HAMBURGUESA TIPO BRIOCHE 85 GR 6 UND WAN A24',unidad:'PAQ'},
-{codigo:'PTEM0069',desc:'PAN DE PERRO 63 GR 8 UND W',unidad:'PAQ'},
-{codigo:'PTEM0008',desc:'PAN MOLIDO 1 KG',unidad:'PAQ'},
-{codigo:'PTEM0076',desc:'PAN TIPO DELI 120 GR 4 UND PARMESANO A14',unidad:'PAQ'},
-{codigo:'PTEM0077',desc:'PAN TIPO DELI ESPECIAL 120 GR 4 UND A14',unidad:'PAQ'},
-{codigo:'PTEM0142',desc:'BABKA COFFE CAKE 840 GR 1 PAQ',unidad:'PAQ'},
-{codigo:'PTEM0128',desc:'BABKA DE CHOCOLATE 840G',unidad:'PAQ'},
-{codigo:'PTEM0109',desc:'BAGEL AMAPOLA 105 G 4 UND',unidad:'PAQ'},
-{codigo:'PTEM0127',desc:'BAGEL CHIPS 250 GR',unidad:'PAQ'},
-{codigo:'PTEM0107',desc:'BAGEL EVERYTHING 105 GR 4 UND',unidad:'PAQ'},
-{codigo:'PTEM0108',desc:'BAGEL PLAIN 105 GR 4 UND',unidad:'PAQ'},
-{codigo:'PTEM0111',desc:'BAGEL SPICY 105 GR 4 UND',unidad:'PAQ'},
-{codigo:'PTEM0104',desc:'CAJA DE PALMERITAS 120 GR 8 UND',unidad:'PAQ'},
-{codigo:'PTEM0183',desc:'DORADITOS 12 UND',unidad:'UND'},
-{codigo:'PTEM0113',desc:'MINI BAGEL EVERYTHING 45 GR 5 UND',unidad:'PAQ'},
-{codigo:'PTEM0167',desc:'PAN MOLIDO 300 GR 1 UND',unidad:'UND'},
-{codigo:'PTEM0134',desc:'PAN TIPO BAGELS INTEGRAL CON TOPPING DE AVENA',unidad:'PAQ'},
-{codigo:'PTEM0136',desc:'TEQUEÑOS 15 UND',unidad:'PAQ'},
-{codigo:'PTEM0114',desc:'MINI BAGEL PLAIN 45 GR 5 UND',unidad:'PAQ'},
-{codigo:'PTEM0117',desc:'MINI BAGEL AJONJOLI 45 GR 5 UND',unidad:'PAQ'},
-{codigo:'PTEM0132',desc:'PAN DE PERRO JUMBO ESPECIAL 85 GR WAN 6 UND',unidad:'PAQ'},
-{codigo:'PTEM0150',desc:'PAN DE HAMBURGUESA ESPECIAL 110 GR 4 UND W A241',unidad:'PAQ'},
-{codigo:'PTEM0170',desc:'PAN DE HAMBURGUESA TIPO BRIOCHE 85 GR 6 UND WAB A21',unidad:'PAQ'},
-{codigo:'PTEM0172',desc:'ROLL NAVIDEÑO 1 UND',unidad:'UND'},
-{codigo:'PTEM0188',desc:'CACHITO DE JAMON DE PAVO CONGELADO 4 UND',unidad:'PAQ'},
-{codigo:'PTEM0193',desc:'CACHITO DE PERNIL CONGELADO 4 UND',unidad:'PAQ'},
-{codigo:'PTEM0194',desc:'PAN DE PERRO DE MANTEQUILLA 63 G 8 UND',unidad:'PAQ'},
-{codigo:'PTEM0112',desc:'BAGEL BLUEBERRY 105 GR 4 UND',unidad:'PAQ'},
-{codigo:'PTEM0116',desc:'DISPONIBLE',unidad:'PAQ'},
-{codigo:'PTEM0121',desc:'DISPONIBLE',unidad:'UND'},
-{codigo:'PTEM0161',desc:'PAN DE HAMBURGUESA ARTESANAL 85 GR 6 UND',unidad:'PAQ'},
-{codigo:'PTEM0125',desc:'PAN DE PERRO 63 GR 8 UND AB',unidad:'PAQ'},
-{codigo:'PTEM0181',desc:'PAQUETE DE PALMERITAS 5 UND',unidad:'PAQ'},
-{codigo:'PTEM0160',desc:'PAN TIPO CHINO MINI 8 GR 54 UND',unidad:'PAQ'},
-{codigo:'PTEM0180',desc:'PAQUETE PDT GALLETAS',unidad:'PAQ'},
-{codigo:'PTEM0164',desc:'TOCINETA AHUMADA REBANADA PAQ 200 GR',unidad:'PAQ'},
-{codigo:'PTEM0156',desc:'CHOCO COOKIES PAQ 5 UND',unidad:'PAQ'},
-{codigo:'PTEM0115',desc:'MINI BAGEL AMAPOLA 45 GR 5 UND',unidad:'PAQ'},
-{codigo:'PTEM0185',desc:'PAN CUADRADO MASA MADRE 1 KG',unidad:'PAQ'},
-{codigo:'PTEM0140',desc:'PAN DE HAMBURGUESA TIPO BRIOCHE 95 GR 6 UND W A21',unidad:'PAQ'},
-{codigo:'PTEM0177',desc:'PAN DE HAMBURGUESA ESPECIAL 120 GR 4 UND W A18',unidad:'PAQ'},
-{codigo:'PTEM0191',desc:'PAN DE HABURGUESA TIPO BRIOCHE 45 G 12 UND W',unidad:'PAQ'},
-{codigo:'PTEM0192',desc:'PAN DE HAMBURGUESA TIPO BRIOCHE  65 G 6 UND W',unidad:'PAQ'},
-{codigo:'PTEM0178',desc:'PAN DE HAMBURGUESA MINI ESPECIAL 40 GR 12 UND W',unidad:'PAQ'},
-{codigo:'PTEM0190',desc:'PAN DULCE 30 G 6 UND',unidad:'PAQ'},
-{codigo:'PTEM0131',desc:'PAN DE HAMBURGUESA ESPECIAL 85 GR 4 UND AB',unidad:'PAQ'},
-{codigo:'PTEM0141',desc:'PAN DE HAMBURGUESA TIPO BRIOCHE 70 GR 6 UND W A24',unidad:'PAQ'},
-{codigo:'PTEM0174',desc:'PAN DE PERRO JUMBO ESPECIAL 85 GR WAB 6 UND',unidad:'PAQ'},
-{codigo:'PTEM0182',desc:'PAN DE HAMBURGUESA TIPO BRIOCHE 120 GR WAM A18',unidad:'PAQ'},
-{codigo:'PTEM0186',desc:'CACHITOS DE JAMON COGELADO 4 UND',unidad:'PAQ'},
-{codigo:'PTEM0187',desc:'CACHITO DE JAMON Y QUESO CONGELADO 4 UND',unidad:'PAQ'},
-{codigo:'PTEM0189',desc:'CACHITO DE PAVO Y QUESO CREMA CONGELADO 4 UND',unidad:'PAQ'},
-{codigo:'PTEM0101',desc:'PAN DE HAMBURGUESA ESPECIAL 85 GR 6 UND WAM A18',unidad:'PAQ'},
-{codigo:'PTEM0123',desc:'PAN DE PERRO JUMBO ESPECIAL 95 GR W 5 UND',unidad:'PAQ'},
-{codigo:'PTEM0124',desc:'PAN DE PERRO JUMBO ESPECIAL 85 GR WAM 6 UND',unidad:'PAQ'},
-{codigo:'PTEM0126',desc:'PAN DE HAMBURGUESA ESPECIAL 100 GR 4 UND AN A18',unidad:'PAQ'},
-{codigo:'PTEM0129',desc:'PAN DE HAMBURGUESA ESPECIAL TIPO BRIOCHE 120 GR W A18',unidad:'PAQ'},
-{codigo:'PTEM0137',desc:'PAN DE HAMBURGUESA 70 GR 6 UND A15',unidad:'PAQ'},
-{codigo:'PTEM0147',desc:'PAN DE PERRO JUMBO ESPECIAL 85 GR AB 6 UND',unidad:'UND'},
-{codigo:'PTEM0148',desc:'PAN DE HAMBURGUESA ESPECIAL 110 GR 4 UND W A18',unidad:'PAQ'},
-{codigo:'PTEM0149',desc:'PAN DE HAMBURGUESA ESPECIAL 55 GR 6 UND W A15',unidad:'PAQ'},
-{codigo:'PTEM0151',desc:'PAN DE HAMBURGUESA ESPECIAL 85 GR 6 UND WAN A18',unidad:'PAQ'},
-{codigo:'PTEM0159',desc:'PAN DE HAMBURGUESA ESPECIAL 65 GR 6 UND A24',unidad:'PAQ'},
-{codigo:'PTEM0179',desc:'PAQUETE DE TATICAS 100 GR',unidad:'PAQ'},
-{codigo:'PTEM0118',desc:'MINI BAGEL SPICY 45 GR 5 UND',unidad:'PAQ'},
-{codigo:'PTEM0184',desc:'PAN TIPO CHINO 20 G 15 UND',unidad:'PAQ'},
-{codigo:'PTSU0015',desc:'PAN DE PAVO GRANDE 1 KG 1 UND',unidad:'UND'},
-{codigo:'PTSU0002',desc:'CACHITO DE JAMON 130 GR 1UND',unidad:'UND'},
-{codigo:'PTSU0003',desc:'CACHITO DE JAMON DE PAVO 130 GR 1UND',unidad:'UND'},
-{codigo:'PTSU0004',desc:'CACHITO DE JAMON Y QUESO 130 GR 1 UND',unidad:'UND'},
-{codigo:'PTSU0006',desc:'CACHITO DE PAVO Y QUESO CREMA 130 GR 1 UND',unidad:'UND'},
-{codigo:'PTSU0008',desc:'CACHITO DE MORTADELA 130 GR 1UND',unidad:'UND'},
-{codigo:'PTSU0012',desc:'PAN DE JAMON GRANDE 1 KG 1 UND',unidad:'UND'},
-{codigo:'PTSU0033',desc:'PAN DE DIOS 45 GR 1 UND',unidad:'UND'},
-{codigo:'PTSU0058',desc:'DONA REGULAR CHOCOLATE BLANCO 60 GR 1 UND',unidad:'UND'},
-{codigo:'PTSU0059',desc:'DONA REGULAR MAPPLE 60 GR 1 UND',unidad:'UND'},
-{codigo:'PTSU0077',desc:'MINI CROISSANT CON PISTACHO',unidad:'UND'},
-{codigo:'PTSU0009',desc:'CINNAMON ROLL 95 GR 1 UND',unidad:'UND'},
-{codigo:'PTSU0010',desc:'CINNAMON ROLL CARAMEL PECAN 95 GR 1 UND',unidad:'UND'},
-{codigo:'PTSU0011',desc:'CINNAMON DE MANI Y CHOCOLATE 95 GR 1 UND',unidad:'UND'},
-{codigo:'PTSU0018',desc:'PAN DE A LOCHA 80 GR 1 UND',unidad:'UND'},
-{codigo:'PTSU0019',desc:'CANILLA 240 GR 1 UND',unidad:'UND'},
-{codigo:'PTSU0023',desc:'BAGUETTE 320 GR 1 UND',unidad:'UND'},
-{codigo:'PTSU0025',desc:'DEMI BAGUETTE 140 GR 1 UND',unidad:'UND'},
-{codigo:'PTSU0028',desc:'MINI CROISSANT SIMPLE 1 UND',unidad:'UND'},
-{codigo:'PTSU0046',desc:'CROISSANT SIMPLE 120 GR 1 UND',unidad:'UND'},
-{codigo:'PTSU0047',desc:'CROISSANT CHOCO-LECHE 160 GR 1 UND',unidad:'UND'},
-{codigo:'PTSU0048',desc:'CROISSANT CHOCO-OSCURO 160 GR 1 UND',unidad:'UND'},
-{codigo:'PTSU0049',desc:'HOJALDRE DE MANZANA 160 GR 1 UND',unidad:'UND'},
-{codigo:'PTSU0051',desc:'DONA REGULAR GLASEADA 60 GR 1 UND',unidad:'UND'},
-{codigo:'PTSU0052',desc:'DONA REGULAR CHOCOLATE 60 GR 1 UND',unidad:'UND'},
-{codigo:'PTSU0053',desc:'DONA REGULAR CHOCO CHISPAS 60 GR 1 UND',unidad:'UND'},
-{codigo:'PTSU0054',desc:'DONA REGULAR CHOCO MANI 60 GR 1 UND',unidad:'UND'},
-{codigo:'PTSU0055',desc:'DONA REGULAR VAINILLA 60 GR 1 UND',unidad:'UND'},
-{codigo:'PTSU0056',desc:'DONA REGULAR BERRY GOOD 60 GR 1 UND',unidad:'UND'},
-{codigo:'PTSU0057',desc:'DONA REGULAR PIE DE LIMON 60 GR 1 UND',unidad:'UND'},
-{codigo:'PTSU0064',desc:'MINI DONA REGULAR GLASEADA 30 GR 1 UND',unidad:'UND'},
-{codigo:'PTSU0065',desc:'MINI DONA REGULAR CHOCOLATE 30 GR 1 UND',unidad:'UND'},
-{codigo:'PTSU0066',desc:'MINI DONA REGULAR CHOCO CHISPAS 30 GR 1 UND',unidad:'UND'},
-{codigo:'PTSU0067',desc:'MINI DONA REGULAR CHOCO MANI 30 GR 1 UND',unidad:'UND'},
-{codigo:'PTSU0068',desc:'MINI DONA REGULAR VAINILLA 30 GR 1 UND',unidad:'UND'},
-{codigo:'PTSU0073',desc:'PERLA DE NUTELLA 30 GR 1 UND',unidad:'UND'},
-{codigo:'PTSU0074',desc:'PERLA DE BUFITO 30 GR 1 UND',unidad:'UND'},
-{codigo:'PTSU0078',desc:'DONA RELLENA PAVLOVA 60GR 1 UND',unidad:'UND'},
-{codigo:'PTSU0083',desc:'CRUFFIN DE CAFE Y AVELLANAS 1 UND',unidad:'UND'},
-{codigo:'PTSU0005',desc:'CACHITO DE PAVO CON QUESO 130 GR 1 UND',unidad:'UND'},
-{codigo:'PTSU0086',desc:'MINI CACHITO DE PAVO Y QUESO CREMA 1 UND',unidad:'UND'},
-{codigo:'PTSU0082',desc:'CRUFFIN DE PISTACHOS 1 UND',unidad:'UND'},
-{codigo:'PTSU0061',desc:'DONA RELLENA DE CHOCOLATE 60 GR 1 UND',unidad:'UND'},
-{codigo:'PTSU0079',desc:'GALLETA DE AVENA 1 UND',unidad:'UND'},
-{codigo:'PTSU0007',desc:'CACHITO DE QUESO 130 GR 1 UND',unidad:'UND'},
-{codigo:'PTSU0014',desc:'PAN DE JAMON EN REBANADA 100 GR 1 UND',unidad:'UND'},
-{codigo:'PTSU0013',desc:'PAN DE JAMON MINI 600 GR 1 UND',unidad:'UND'},
-{codigo:'PTSU0017',desc:'PAN DE JAMON Y PANNETONE 1 UND',unidad:'UND'},
-{codigo:'PTSU0016',desc:'PAN DE PAVO MINI 500 GR 1 UND',unidad:'UND'},
-{codigo:'PTSU0001',desc:'PAN DULCE 30 GR 1 UND',unidad:'UND'},
-{codigo:'PTSU0062',desc:'DONA RELLENA DE BUFITO 60 GR 1 UND',unidad:'UND'},
-{codigo:'PTSU0075',desc:'CACHITO DE PERNIL 130 G 1 UND',unidad:'UND'},
-{codigo:'PTSU0030',desc:'DISPONIBLE',unidad:'UND'},
-{codigo:'PTSU0034',desc:'DISPONIBLE',unidad:'UND'},
-{codigo:'PTSU0035',desc:'DISPONIBLE',unidad:'UND'},
-{codigo:'PTSU0036',desc:'DISPONIBLE',unidad:'UND'},
-{codigo:'PTSU0037',desc:'DISPONIBLE',unidad:'UND'},
-{codigo:'PTSU0038',desc:'DISPONIBLE',unidad:'UND'},
-{codigo:'PTSU0039',desc:'DISPONIBLE',unidad:'UND'},
-{codigo:'PTSU0026',desc:'GALLEGO 400 GR 1 UND',unidad:'UND'},
-{codigo:'PTSU0027',desc:'GALLEGUITO 140 GR 1 UND',unidad:'UND'},
-{codigo:'PTSU0076',desc:'SANDUCHE DE PROSCIUTTO',unidad:'UND'},
-{codigo:'PTSU0081',desc:'CRUFFIN DE PECANS 1 UND',unidad:'UND'},
-{codigo:'PTSU0022',desc:'MINI CANILLA 120 GR 1 UND',unidad:'UND'},
-{codigo:'PTSU0024',desc:'BAGUITO 140 GR 1 UND',unidad:'UND'},
-{codigo:'PTSU0089',desc:'DONA REGULAR COOKIES & CREAM 60 G 1 UND',unidad:'UND'},
-{codigo:'PTSU0063',desc:'DONA RELLENA DE CREMA DE MANI 60 GR 1 UND',unidad:'UND'},
-{codigo:'PTSU0060',desc:'DONA RELLENA DE VAINILLA 60 GR 1 UND',unidad:'UND'},
-{codigo:'PTSU0069',desc:'MINI DONA REGULAR BERRY GOOD 30 GR 1 UND',unidad:'UND'},
-{codigo:'PTSU0071',desc:'MINI DONA REGULAR CHOCOLATE BLANCO 30 GR 1 UND',unidad:'UND'},
-{codigo:'PTSU0072',desc:'MINI DONA REGULAR MAPPLE 30 GR 1 UND',unidad:'UND'},
-{codigo:'PTSU0080',desc:'MINI CACHITO DE JAMON 1 UND',unidad:'UND'},
-{codigo:'PTSU0084',desc:'CINNAMON ROLL TIRAMISU 95 GR 1 UND',unidad:'UND'},
-                // (Se removió la lista estática completa: los productos se cargan dinámicamente)
-                function openPanel() { panel.style.display = 'block'; panelBuscar.value = ''; renderPanel(''); panelBuscar.focus(); }
-                function closePanel() { panel.style.display = 'none'; }
-                btnAgregar.addEventListener('click', () => { panel.style.display !== 'none' ? closePanel() : openPanel(); });
-                document.addEventListener('click', (e) => { if (!panel.contains(e.target) && e.target !== btnAgregar) closePanel(); });
-                document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closePanel(); });
-                function renderPanel(term='') {
-                    const t = term.trim().toLowerCase();
-                    panelLista.innerHTML='';
-                    const datos = t ? PRODUCTS_CACHE.filter(p=>p.codigo.toLowerCase().includes(t)||p.desc.toLowerCase().includes(t)) : PRODUCTS_CACHE;
-                    datos.forEach(p=>{
-                        const item = document.createElement('div');
-                        item.className='panel-item';
                         item.innerHTML = `<strong>${p.codigo}</strong> — ${p.desc}`;
                         item.addEventListener('click', ()=>addProducto(p));
                         panelLista.appendChild(item);
