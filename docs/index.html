@@ -1,42 +1,5 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Formularios Empaquetados y Merma</title>
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-    <div class="container">
-        <h1>Registro de Formularios</h1>
-        <div style="text-align:center; margin-bottom:24px;">
-            <a href="menu.html" class="volver-menu">&#8592; Volver al menú</a>
-        </div>
-        <!-- EMPAQUETADOS -->
-        <div class="form-section" id="form-empaquetados" style="display:none;">
-            <h2>EMPAQUETADOS</h2>
-            <form id="empaquetados-form">
-                <div class="compact-grid">
-                    <div class="field">
-                        <label for="empa-fecha">Fecha:</label>
-                        <div class="inline">
-                            <input type="date" id="empa-fecha" name="fecha" required />
-                            <button type="button" id="empa-btn-fecha-hoy" class="btn-small">Hoy</button>
-                        </div>
-                        <input type="text" id="empa-hora" name="hora" placeholder="Hora" readonly class="hora-input" />
-                    </div>
-                    <div class="field">
-                        <label for="empa-entregado">Entregado a:</label>
-                        <select id="empa-entregado" name="entregado" required class="select">
-                            <option value="">Selecciona una opción</option>
-                            <option value="K FOOD">K FOOD</option>
-                            <option value="DESPACHO">DESPACHO</option>
-                        </select>
-                    </div>
-                    <div class="field">
-                        <label for="empa-registro">Número de registro:</label>
-                        <input type="text" id="empa-registro" name="registro" required />
-                    </div>
                     <div class="field">
                         <label for="empa-responsable">Responsable:</label>
                         <select id="empa-responsable" name="responsable" required class="select">
