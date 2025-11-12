@@ -210,10 +210,13 @@
                 row.className='sel-row producto-line';
                 row.dataset.codigo = p.codigo;
                 row.innerHTML = `
-                    <div class='prod-name'><strong>${p.codigo}</strong> — ${p.desc}</div>
-                    <div class='qty-actions'>
-                        <input type='number' min='1' step='1' class='prod-qty' placeholder='0' data-codigo='${p.codigo}' data-desc='${'${p.desc}'.replace(/"/g,'&quot;')}' data-unidad='${p.unidad}' name='qty_${p.codigo}'>
-                        <button type='button' class='remove-sel'>✕</button>
+                    <div class="prod-name"><strong>${p.codigo}</strong> — ${p.desc}</div>
+                    <div class="qty-actions">
+               <input type="number" min="1" step="1" class="prod-qty" placeholder="0"
+                   data-codigo="${p.codigo}"
+                   data-desc="${(p.desc||'').replace(/"/g,'&quot;')}"
+                               data-unidad="${p.unidad}" name="qty_${p.codigo}">
+                        <button type="button" class="remove-sel">✕</button>
                     </div>`;
                 row.querySelector('.remove-sel').addEventListener('click', ()=>row.remove());
                 contSel.appendChild(row);
@@ -240,7 +243,6 @@
             fd.append('codigo', codigo);
             fd.append('descripcion', desc);
             fd.append('unidad', unidad);
-            // Enviar clave de administrador para endpoint protegido
             fd.append('adminKey', 'PASANTIAS90');
             msg.textContent='Guardando...';
             try {
@@ -267,93 +269,6 @@
             window.__empaPanel = initPanel('empa');
             window.__mermaPanel = initPanel('merma');
             await refreshPanels();
-            const toggleNuevo = document.getElementById('toggle-nuevo-prod');
-            const boxNuevo = document.getElementById('nuevo-prod-box');
-            if(toggleNuevo) toggleNuevo.addEventListener('click', ()=>{ boxNuevo.style.display = boxNuevo.style.display==='none' ? 'block':'none'; });
-            const guardarBtn = document.getElementById('np-guardar');
-            if(guardarBtn) guardarBtn.addEventListener('click', guardarNuevoProducto);
-        });
-    })();
-    </script>
-</body>
-</html>
-            function render(term=''){
-                const t = term.trim().toLowerCase();
-                lista.innerHTML='';
-                const datos = t? PRODUCTOS_CACHE.filter(p=>p.codigo.toLowerCase().includes(t)||p.desc.toLowerCase().includes(t)) : PRODUCTOS_CACHE;
-                datos.forEach(p=>{
-                    const div = document.createElement('div');
-                    div.className='panel-item';
-                    div.innerHTML = `<strong>${p.codigo}</strong> — ${p.desc}`;
-                    div.addEventListener('click',()=>addProducto(p));
-                    lista.appendChild(div);
-                });
-            }
-            function open(){ panel.style.display='block'; buscar.value=''; render(''); buscar.focus(); }
-            function close(){ panel.style.display='none'; }
-            btn.addEventListener('click', ()=>{ panel.style.display==='none'?open():close(); });
-            document.addEventListener('click', e=>{ if(!panel.contains(e.target) && e.target!==btn) close(); });
-            document.addEventListener('keydown', e=>{ if(e.key==='Escape') close(); });
-            buscar.addEventListener('input', ()=>render(buscar.value));
-            function addProducto(p){
-                const ya = contSel.querySelector(`.sel-row[data-codigo="${p.codigo}"] input.prod-qty`);
-                if(ya){ ya.focus(); close(); return; }
-                const row = document.createElement('div');
-                row.className='sel-row producto-line';
-                row.dataset.codigo = p.codigo;
-                row.innerHTML = `
-                    <div class='prod-name'><strong>${p.codigo}</strong> — ${p.desc}</div>
-                    <div class='qty-actions'>
-                        <input type='number' min='1' step='1' class='prod-qty' placeholder='0' data-codigo='${p.codigo}' data-desc='${p.desc.replace(/"/g,'&quot;')}' data-unidad='${p.unidad}' name='qty_${p.codigo}'>
-                        <button type='button' class='remove-sel'>✕</button>
-                    </div>`;
-                row.querySelector('.remove-sel').addEventListener('click', ()=>row.remove());
-                contSel.appendChild(row);
-                row.querySelector('.prod-qty').focus();
-                close();
-            }
-            // Exponer para uso al guardar nuevo producto
-            return { render, open, close, buscar };
-        }
-        async function refreshPanels(){
-            await cargarProductos();
-            if(window.__empaPanel) window.__empaPanel.render(window.__empaPanel.buscar.value);
-            if(window.__mermaPanel) window.__mermaPanel.render(window.__mermaPanel.buscar.value);
-        }
-        async function guardarNuevoProducto(){
-            const codigo = document.getElementById('np-codigo').value.trim();
-            const desc = document.getElementById('np-desc').value.trim();
-            const unidad = (document.getElementById('np-unidad').value.trim()||'PAQ');
-            const msg = document.getElementById('np-msg');
-            if(!codigo || !desc){ msg.textContent='Completa código y descripción'; return; }
-            // Unicidad rápida local
-            if(PRODUCTOS_CACHE.some(p=>p.codigo.toLowerCase()===codigo.toLowerCase())){ msg.textContent='Código ya existe'; return; }
-            const base = getBaseUrl();
-            const url = base + (base.includes('?')?'&':'?') + 'action=addProduct';
-            const fd = new FormData(); fd.append('codigo', codigo); fd.append('descripcion', desc); fd.append('unidad', unidad);
-            msg.textContent='Guardando...';
-            try {
-                const r = await fetch(url, {method:'POST', body: fd});
-                const t = await r.text(); let j; try{ j=JSON.parse(t);}catch(_){ j={ok:r.ok}; }
-                if(j.ok){ msg.textContent='Guardado'; PRODUCTOS_CACHE=[]; await refreshPanels(); setTimeout(()=>{ msg.textContent=''; document.getElementById('np-codigo').value=''; document.getElementById('np-desc').value=''; },1200); }
-                else msg.textContent='Error al guardar';
-            } catch(e){ msg.textContent='Error de conexión'; }
-        }
-        document.addEventListener('DOMContentLoaded', async ()=>{
-            // Mostrar formulario solicitado
-            const abrirTab = localStorage.getItem('abrirTab');
-            const empaDiv = document.getElementById('form-empaquetados');
-            const mermaDiv = document.getElementById('form-merma');
-            if(abrirTab==='empaquetados') empaDiv.style.display=''; else if(abrirTab==='merma') mermaDiv.style.display='';
-            localStorage.removeItem('abrirTab');
-            // Inicializar fecha/hora
-            initFecha('empa');
-            initFecha('merma');
-            // Inicializar paneles
-            window.__empaPanel = initPanel('empa');
-            window.__mermaPanel = initPanel('merma');
-            await refreshPanels();
-            // Nuevo producto toggle
             const toggleNuevo = document.getElementById('toggle-nuevo-prod');
             const boxNuevo = document.getElementById('nuevo-prod-box');
             if(toggleNuevo) toggleNuevo.addEventListener('click', ()=>{ boxNuevo.style.display = boxNuevo.style.display==='none' ? 'block':'none'; });
