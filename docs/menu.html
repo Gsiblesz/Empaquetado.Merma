@@ -20,7 +20,7 @@
         <div class="menu-footer-corner">
             <a href="#" class="footer-btn ajustes-btn" onclick="toggleAjustes(event)">Ajustes</a>
             <a href="registros.html" class="footer-btn" style="background:#2196f3;">Registros</a>
-            <a href="productos.html" class="footer-btn" style="background:#43e6b1; color:#23263a;">Productos</a>
+            <a href="#" class="footer-btn" style="background:#43e6b1; color:#23263a;" onclick="openProductos(event)">Productos</a>
             <a href="#" class="footer-btn inicio-btn" onclick="location.reload()">Inicio</a>
         </div>
         <div id="panel-ajustes" class="apps-script-link" style="display:none; flex-direction:column; gap:12px;">
@@ -59,6 +59,21 @@
     // Panel de ajustes dinámico
     // Clave de administrador estática (solo control básico en cliente; no seguridad real).
     const ADMIN_KEY = 'PASANTIAS90';
+    const DEFAULT_URL = "https://script.google.com/macros/s/AKfycbyDK26GtO5auvb6eFCinKTiuJl8ZLRwTO0_8GElgid0jaIIajqakPQLTNwPlhoDsREy5w/exec";
+    function isAdminUnlocked(){ try { return sessionStorage.getItem('ADMIN_UNLOCKED') === '1'; } catch(_) { return false; } }
+    function openProductos(e){
+        e.preventDefault();
+        if(isAdminUnlocked()) { window.location.href = 'productos.html'; return; }
+        // Solicitar clave: mostrar panel de ajustes y enfocar
+        const p = document.getElementById('panel-ajustes');
+        p.style.display = 'flex';
+        const res = document.getElementById('resultado-prueba');
+        res.textContent = 'Ingresa la clave para acceder a Productos';
+        res.style.color = '#ffb347';
+        try { sessionStorage.setItem('GOTO_PRODUCTOS','1'); } catch(_) {}
+        const keyInput = document.getElementById('input-key');
+        if(keyInput) keyInput.focus();
+    }
     function toggleAjustes(e){
         e.preventDefault();
         const p=document.getElementById('panel-ajustes');
@@ -76,7 +91,11 @@
         document.getElementById('input-key').value='';
         ocultarBloqueURL();
     }
-    function cargarURL(){ const saved = localStorage.getItem('WEB_APP_URL_DYNAMIC'); const input = document.getElementById('input-webapp'); if(saved) input.value = saved; }
+    function cargarURL(){
+        const saved = localStorage.getItem('WEB_APP_URL_DYNAMIC');
+        const input = document.getElementById('input-webapp');
+        input.value = saved && saved.trim() ? saved.trim() : DEFAULT_URL;
+    }
     function ocultarBloqueURL(){ const b=document.getElementById('url-block'); if(b) b.style.display='none'; }
     function desbloquearURL(){
         const keyIn = document.getElementById('input-key');
@@ -87,6 +106,14 @@
         block.style.display='flex';
         cargarURL();
         mostrarResultado('Bloque desbloqueado', true);
+        try { sessionStorage.setItem('ADMIN_UNLOCKED','1'); } catch(_) {}
+        // Redirigir si venía del botón Productos
+        try {
+            if(sessionStorage.getItem('GOTO_PRODUCTOS') === '1'){
+                sessionStorage.removeItem('GOTO_PRODUCTOS');
+                window.location.href = 'productos.html';
+            }
+        } catch(_) {}
     }
         function guardarURL(){
             // Sólo se permite guardar si el bloque está visible (clave correcta ingresada)
@@ -104,6 +131,7 @@
             let url = '';
             if(blockVisible){ url = document.getElementById('input-webapp').value.trim(); }
             if(!url){ url = (localStorage.getItem('WEB_APP_URL_DYNAMIC')||'').trim(); }
+            if(!url){ url = DEFAULT_URL; }
             if(!url){ mostrarResultado('No hay URL: desbloquea y guarda primero', false); return; }
             const pingUrl = url + (url.includes('?')?'&':'?') + 'ping=test';
             mostrarResultado('Probando...', true);
