@@ -153,8 +153,9 @@ function doPost(e) {
 
     if (rows.length) {
       var colsToWrite = writeCols || (rows[0] ? rows[0].length : 1);
-      try { console.log('Writing rows count:', rows.length, 'cols:', colsToWrite); } catch(_) {}
-      sh.getRange(sh.getLastRow() + 1, 1, rows.length, colsToWrite).setValues(rows);
+  try { console.log('Writing rows count:', rows.length, 'cols:', colsToWrite); } catch(_) {}
+  try { console.log('MERMA rows to write:', JSON.stringify(rows)); } catch(_) {}
+  sh.getRange(sh.getLastRow() + 1, 1, rows.length, colsToWrite).setValues(rows);
       if (nonce) storeNonce(nonce);
     }
 
