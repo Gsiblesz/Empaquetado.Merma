@@ -65,13 +65,30 @@ function enviarFormulario(formId, url) {
                     const row = inp.closest('.producto-line');
                     const motivoEl = row ? row.querySelector('.merma-motivo') : null;
                     const loteEl = row ? row.querySelector('.merma-lote') : null;
+                    // read motivo and lote robustly: prefer value, fallback to selected option text
+                    var motivoVal = '';
+                    if (motivoEl) {
+                        try {
+                            motivoVal = (motivoEl.value || '').toString().trim();
+                        } catch(_) { motivoVal = ''; }
+                        try {
+                            if (!motivoVal && typeof motivoEl.selectedIndex === 'number' && motivoEl.selectedIndex >= 0) {
+                                var opt = motivoEl.options[motivoEl.selectedIndex];
+                                motivoVal = (opt && (opt.value || opt.text) || '').toString().trim();
+                            }
+                        } catch(_) {}
+                    }
+                    var loteVal = '';
+                    if (loteEl) {
+                        try { loteVal = (loteEl.value || '').toString().trim(); } catch(_) { loteVal = ''; }
+                    }
                     seleccionados.push({
                         codigo: inp.dataset.codigo,
                         descripcion: inp.dataset.desc || '',
                         unidad: inp.dataset.unidad || '',
                         cantidad: val,
-                        motivo: motivoEl ? (motivoEl.value||'') : '',
-                        lote: loteEl ? (loteEl.value||'') : ''
+                        motivo: motivoVal,
+                        lote: loteVal
                     });
                 }
             });
