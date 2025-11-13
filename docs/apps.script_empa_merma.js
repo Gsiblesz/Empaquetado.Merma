@@ -45,8 +45,7 @@ function doPost(e) {
     const productos = parseProductos(params.productos_json);
     const marcaTemporal = Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HH:mm:ss');
 
-  let rows = [];
-  var writeCols = null; // will hold the number of columns to write (ensures Merma uses colCount)
+    let rows = [];
 
     if (sheetKey === 'Empaquetado') {
       const desiredHeader = [
@@ -60,8 +59,7 @@ function doPost(e) {
         'RESPONSABLE',
         'SEDE'
       ];
-  const colCount = ensureHeaderFull(sh, desiredHeader);
-  writeCols = colCount;
+      const colCount = ensureHeaderFull(sh, desiredHeader);
 
       const fecha = params.fecha || '';
       const entregado = params.entregado || '';
@@ -106,8 +104,7 @@ function doPost(e) {
         'NUMERO DE LOTE',
         'RESPONSABLE'
       ];
-  const colCount = ensureHeaderFull(sh, desiredHeader);
-  writeCols = colCount;
+      const colCount = ensureHeaderFull(sh, desiredHeader);
 
       const fecha = params.fecha || '';
       const sede = params.sede || params.empresa || '';
@@ -115,46 +112,35 @@ function doPost(e) {
       const motivoGlobal = (params.motivo || '').trim();
       const loteGlobal = (params.lote || '').trim();
 
-      // debug: show incoming productos and global motivo/lote
-      try { console.log('MERMA incoming productos:', JSON.stringify(productos)); } catch(_) {}
-      try { console.log('MERMA motivoGlobal:', motivoGlobal, 'loteGlobal:', loteGlobal); } catch(_) {}
-
       if (productos.length) {
-        productos.forEach(function(it) {
-          var motivoItem = (it && it.motivo) ? String(it.motivo).trim() : '';
-          if (!motivoItem) motivoItem = motivoGlobal;
-          var loteItem = (it && it.lote) ? String(it.lote).trim() : '';
-          if (!loteItem) loteItem = loteGlobal;
-
-          var descripcionVal = it && (it.descripcion || it.codigo) ? (it.descripcion || it.codigo) : '';
-          var unidadVal = it && it.unidad ? it.unidad : '';
-          var cantidadVal = toNumber(it && it.cantidad);
-
-          var r = [
+        productos.forEach(it => {
+          const motivoItem = String(it.motivo || '').trim() || motivoGlobal;
+            const loteItem = String(it.lote || '').trim() || loteGlobal;
+          let r = [
             marcaTemporal,
             fecha,
-            descripcionVal,
-            unidadVal,
+            it.descripcion || it.codigo || '',
+            it.unidad || '',
             sede,
             motivoItem,
-            cantidadVal,
+            toNumber(it.cantidad),
             loteItem,
             responsable
           ];
-          while (r.length < colCount) r.push('.');
+          if (r.length < colCount) {
+            while (r.length < colCount) r.push('.');
+          }
           rows.push(r);
         });
       } else {
-        var r = [marcaTemporal, fecha, '', '', sede, motivoGlobal, 0, loteGlobal, responsable];
+        let r = [marcaTemporal, fecha, '', '', sede, motivoGlobal, 0, loteGlobal, responsable];
         while (r.length < colCount) r.push('.');
         rows.push(r);
       }
     }
 
     if (rows.length) {
-      var colsToWrite = writeCols || (rows[0] ? rows[0].length : 1);
-      try { console.log('Writing rows count:', rows.length, 'cols:', colsToWrite); } catch(_) {}
-      sh.getRange(sh.getLastRow() + 1, 1, rows.length, colsToWrite).setValues(rows);
+      sh.getRange(sh.getLastRow() + 1, 1, rows.length, rows[0].length).setValues(rows);
       if (nonce) storeNonce(nonce);
     }
 
