@@ -3,7 +3,7 @@
 // Si hay URL guardada en ajustes, úsala; si no, fallback a la fija:
 const WEB_APP_URL = (typeof localStorage !== 'undefined' && localStorage.getItem('WEB_APP_URL_DYNAMIC'))
     ? localStorage.getItem('WEB_APP_URL_DYNAMIC')
-    : "https://script.google.com/macros/s/AKfycbx0a4lqUhnSMV6Usl_gj7WZSLvbJEPVVofcMi_ayV50YDEbHApsySq1rV1G55s51dml4A/exec"; // URL por defecto (deployment actual)
+    : "https://script.google.com/macros/s/AKfycbw6K9RLQKfFC7X6OAfdawdx8C-ga7hD6Cme_E_0glZrflLuVVZZNR6DiSmjm7slU7V7FQ/exec"; // URL por defecto (deployment actual)
 
 // Endpoints por hoja (el Apps Script espera ?sheet=Empaquetado | ?sheet=Merma)
 const APPS_SCRIPT_URL_EMPAQUETADOS = WEB_APP_URL ? WEB_APP_URL + "?sheet=Empaquetado" : "";
@@ -94,6 +94,15 @@ function enviarFormulario(formId, url) {
             });
             if (seleccionados.length) {
                 datos.append('productos_json', JSON.stringify(seleccionados));
+                if (formId === "merma-form") {
+                    // Captura redundante para Apps Script en caso de que el JSON se recorte en tránsito
+                    datos.append('productos_count', String(seleccionados.length));
+                    seleccionados.forEach((item, idx) => {
+                        datos.append(`prodCodigo_${idx}`, item.codigo || '');
+                        datos.append(`motivo_${idx}`, item.motivo || '');
+                        datos.append(`lote_${idx}`, item.lote || '');
+                    });
+                }
             }
             // Identificar a qué hoja va (para depuración opcional en backend)
             if (url.includes('Empaquetado')) datos.append('sheet', 'Empaquetado');

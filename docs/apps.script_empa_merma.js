@@ -42,10 +42,11 @@ function doPost(e) {
     const sh = ss.getSheetByName(sheetName);
     if (!sh) return respond({ ok:false, error:'No existe la pestaña: '+sheetName });
 
-    const productos = parseProductos(params.productos_json);
+    const productos = hydrateProductos(parseProductos(params.productos_json), params);
     const marcaTemporal = Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HH:mm:ss');
 
-    let rows = [];
+  let rows = [];
+  var writeCols = null; // will hold the number of columns to write (ensures Merma uses colCount)
 
     if (sheetKey === 'Empaquetado') {
       const desiredHeader = [
@@ -59,7 +60,8 @@ function doPost(e) {
         'RESPONSABLE',
         'SEDE'
       ];
-      const colCount = ensureHeaderFull(sh, desiredHeader);
+  const colCount = ensureHeaderFull(sh, desiredHeader);
+  writeCols = desiredHeader.length;
 
       const fecha = params.fecha || '';
       const entregado = params.entregado || '';
@@ -81,15 +83,11 @@ function doPost(e) {
             responsable,
             sede
           ];
-          if (r.length < colCount) {
-            while (r.length < colCount) r.push('.');
-          }
-          rows.push(r);
+          rows.push(fitRow(r, writeCols));
         });
       } else {
         let r = [marcaTemporal, direccionValor, fecha, '', 0, entregado, registro, responsable, sede];
-        while (r.length < colCount) r.push('.');
-        rows.push(r);
+        rows.push(fitRow(r, writeCols));
       }
 
     } else if (sheetKey === 'Merma') {
@@ -104,7 +102,8 @@ function doPost(e) {
         'NUMERO DE LOTE',
         'RESPONSABLE'
       ];
-      const colCount = ensureHeaderFull(sh, desiredHeader);
+  const colCount = ensureHeaderFull(sh, desiredHeader);
+  writeCols = desiredHeader.length;
 
       const fecha = params.fecha || '';
       const sede = params.sede || params.empresa || '';
@@ -112,35 +111,45 @@ function doPost(e) {
       const motivoGlobal = (params.motivo || '').trim();
       const loteGlobal = (params.lote || '').trim();
 
+      // debug: show incoming productos and global motivo/lote
+      try { console.log('MERMA incoming productos:', JSON.stringify(productos)); } catch(_) {}
+      try { console.log('MERMA motivoGlobal:', motivoGlobal, 'loteGlobal:', loteGlobal); } catch(_) {}
+
       if (productos.length) {
-        productos.forEach(it => {
-          const motivoItem = String(it.motivo || '').trim() || motivoGlobal;
-            const loteItem = String(it.lote || '').trim() || loteGlobal;
-          let r = [
+        productos.forEach(function(it) {
+          var motivoItem = (it && it.motivo) ? String(it.motivo).trim() : '';
+          if (!motivoItem) motivoItem = motivoGlobal;
+          var loteItem = (it && it.lote) ? String(it.lote).trim() : '';
+          if (!loteItem) loteItem = loteGlobal;
+
+          var descripcionVal = it && (it.descripcion || it.codigo) ? (it.descripcion || it.codigo) : '';
+          var unidadVal = it && it.unidad ? it.unidad : '';
+          var cantidadVal = toNumber(it && it.cantidad);
+
+          var r = [
             marcaTemporal,
             fecha,
-            it.descripcion || it.codigo || '',
-            it.unidad || '',
+            descripcionVal,
+            unidadVal,
             sede,
             motivoItem,
-            toNumber(it.cantidad),
+            cantidadVal,
             loteItem,
             responsable
           ];
-          if (r.length < colCount) {
-            while (r.length < colCount) r.push('.');
-          }
-          rows.push(r);
+          rows.push(fitRow(r, writeCols));
         });
       } else {
-        let r = [marcaTemporal, fecha, '', '', sede, motivoGlobal, 0, loteGlobal, responsable];
-        while (r.length < colCount) r.push('.');
-        rows.push(r);
+        var r = [marcaTemporal, fecha, '', '', sede, motivoGlobal, 0, loteGlobal, responsable];
+        rows.push(fitRow(r, writeCols));
       }
     }
 
     if (rows.length) {
-      sh.getRange(sh.getLastRow() + 1, 1, rows.length, rows[0].length).setValues(rows);
+      var colsToWrite = writeCols || (rows[0] ? rows[0].length : 1);
+  try { console.log('Writing rows count:', rows.length, 'cols:', colsToWrite); } catch(_) {}
+  try { console.log('MERMA rows to write:', JSON.stringify(rows)); } catch(_) {}
+  sh.getRange(sh.getLastRow() + 1, 1, rows.length, colsToWrite).setValues(rows);
       if (nonce) storeNonce(nonce);
     }
 
@@ -303,6 +312,28 @@ function parseProductos(jsonStr){
 function toNumber(n){
   const v = Number(n);
   return isFinite(v) && v > 0 ? v : 0;
+}
+function fitRow(row, targetLen){
+  const out = Array.isArray(row) ? row.slice(0, targetLen) : [];
+  while (out.length < targetLen) out.push('.');
+  if (out.length > targetLen) out.length = targetLen;
+  return out;
+}
+function hydrateProductos(productos, params){
+  const arr = Array.isArray(productos) ? productos.slice() : [];
+  const countRaw = params && params.productos_count;
+  const count = parseInt(countRaw, 10);
+  if (!isFinite(count) || count <= 0) return arr;
+  for (let i = 0; i < count; i++){
+    const motivo = params['motivo_'+i] ? String(params['motivo_'+i]).trim() : '';
+    const lote = params['lote_'+i] ? String(params['lote_'+i]).trim() : '';
+    const codigo = params['prodCodigo_'+i] ? String(params['prodCodigo_'+i]).trim() : '';
+    if (!arr[i]) arr[i] = {};
+    if (motivo && !arr[i].motivo) arr[i].motivo = motivo;
+    if (lote && !arr[i].lote) arr[i].lote = lote;
+    if (codigo && !arr[i].codigo) arr[i].codigo = codigo;
+  }
+  return arr;
 }
 
 // Encabezado robusto: rellena vacíos y extiende hasta el total de columnas usadas por la hoja.
