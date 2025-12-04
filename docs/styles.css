@@ -268,6 +268,14 @@ button:hover {
     background: #2196f3;
     color: #fff;
 }
+button.secondary:not(.btn-small) {
+    background: #ff8a65;
+    color: #181c2f;
+}
+button.secondary:not(.btn-small):hover {
+    background: #ff7043;
+    color: #fff;
+}
 #mensaje {
     text-align: center;
     margin-top: 16px;

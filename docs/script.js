@@ -38,6 +38,8 @@ function enviarFormulario(formId, url) {
         const msgEl = document.getElementById("mensaje");
         if (msgEl) msgEl.textContent = "Enviando...";
         const datos = new FormData(form);
+        const qtyInputs = form.querySelectorAll('.prod-qty');
+        let seleccionados = [];
         // Formatear fecha a dd-mm-aaaa si viene como yyyy-mm-dd
         try {
             const fechaInput = form.querySelector('input[name="fecha"]');
@@ -57,8 +59,7 @@ function enviarFormulario(formId, url) {
         datos.append('nonce', nonce);
         // Agregar solo los productos con cantidad > 0 como JSON
         try {
-            const qtyInputs = form.querySelectorAll('.prod-qty');
-            const seleccionados = [];
+            const seleccionadosTmp = [];
             qtyInputs.forEach(inp => {
                 const val = parseInt(inp.value, 10);
                 if (!isNaN(val) && val > 0) {
@@ -82,7 +83,7 @@ function enviarFormulario(formId, url) {
                     if (loteEl) {
                         try { loteVal = (loteEl.value || '').toString().trim(); } catch(_) { loteVal = ''; }
                     }
-                    seleccionados.push({
+                    seleccionadosTmp.push({
                         codigo: inp.dataset.codigo,
                         descripcion: inp.dataset.desc || '',
                         unidad: inp.dataset.unidad || '',
@@ -92,6 +93,7 @@ function enviarFormulario(formId, url) {
                     });
                 }
             });
+            seleccionados = seleccionadosTmp;
             if (seleccionados.length) {
                 datos.append('productos_json', JSON.stringify(seleccionados));
                 if (formId === "merma-form") {
@@ -108,6 +110,15 @@ function enviarFormulario(formId, url) {
             if (url.includes('Empaquetado')) datos.append('sheet', 'Empaquetado');
             if (url.includes('Merma')) datos.append('sheet', 'Merma');
         } catch(_) { /* no-op */ }
+        if (!seleccionados.length) {
+            if (msgEl) msgEl.textContent = "Agrega al menos un producto con cantidad.";
+            form.dataset.submitting = "0";
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Enviar";
+            }
+            return;
+        }
         fetch(url, {
             method: "POST",
             body: datos
