@@ -220,8 +220,10 @@
             document.addEventListener('keydown', e=>{ if(e.key==='Escape') close(); });
             buscar.addEventListener('input', ()=>render(buscar.value));
             function addProducto(p){
-                const ya = contSel.querySelector(`.sel-row[data-codigo="${p.codigo}"] input.prod-qty`);
-                if(ya){ ya.focus(); close(); return; }
+                if(!isMerma){
+                    const ya = contSel.querySelector(`.sel-row[data-codigo="${p.codigo}"] input.prod-qty`);
+                    if(ya){ ya.focus(); close(); return; }
+                }
                 const row = document.createElement('div');
                 row.className='sel-row producto-line';
                 row.dataset.codigo = p.codigo;
