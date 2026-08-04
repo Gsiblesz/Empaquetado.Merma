@@ -65,7 +65,7 @@ git push -u origin main
 - Abre `docs/menu.html` y entra a cada formulario.
 - Completa datos mínimos.
 - Agrega un par de productos y cantidades.
-- Envía y confirma que aparecen filas en las pestañas Empaquetado/Merma de tu hoja, incluyendo la columna `CODIGO`.
+- Envía y confirma que aparecen filas en las pestañas Empaquetado/Merma de tu hoja, incluyendo la columna `CODIGO` a la izquierda de `PRODUCTO`.
 
 ## Gestión de Productos (Catálogo)
 
@@ -105,7 +105,7 @@ Puntos a revisar si lo adaptas:
 
 ```javascript
 // ===== CONFIG =====
-const SPREADSHEET_ID = 'TU_ID_AQUI';
+const SPREADSHEET_ID = '1KR29IaMGRvHjVdgGLxDiJm6vx7gckUSor-LmqUI3Ej8';
 const SHEETS = { Empaquetado: 'EMPAQUETADO', Merma: 'MERMA' };
 const PRODUCT_SHEET = 'PRODUCTOS';
 const PRODUCT_HEADERS = ['CODIGOS','DESCRIPCION','Unidad_Primaria'];
@@ -143,17 +143,17 @@ function doPost(e){
    const marca = Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HH:mm:ss');
    let rows=[];
    if(sheetKey==='Empaquetado'){
-       const header=['Marca temporal','FECHA','PRODUCTO','CANTIDAD','ENTREGADO A','NUMERO REGISTRO','RESPONSABLE','SEDE','CODIGO'];
+       const header=['Marca temporal','FECHA','CODIGO','PRODUCTO','CANTIDAD','ENTREGADO A','NUMERO REGISTRO','RESPONSABLE','SEDE'];
        ensureHeader(sh, header);
        const fecha=params.fecha||'', entregado=params.entregado||'', registro=params.registro||'', responsable=params.responsable||'', sede=params.sede||'';
-       if(productos.length){ productos.forEach(p=> rows.push([marca, fecha, p.descripcion||p.codigo||'', toNumber(p.cantidad), entregado, registro, responsable, sede, p.codigo||''])); }
-       else rows.push([marca, fecha,'',0,entregado,registro,responsable,sede,'']);
+       if(productos.length){ productos.forEach(p=> rows.push([marca, fecha, p.codigo||'', p.descripcion||p.codigo||'', toNumber(p.cantidad), entregado, registro, responsable, sede])); }
+       else rows.push([marca, fecha,'','',0,entregado,registro,responsable,sede]);
    } else if(sheetKey==='Merma') {
-       const header=['Marca Temporal','FECHA','PRODUCTO','UNIDAD DE MEDIDA','SEDE','MOTIVO DE MERMA','CANTIDAD DEL MOTIVO DE MERMA','NUMERO DE LOTE','RESPONSABLE','CODIGO'];
+       const header=['Marca Temporal','FECHA','CODIGO','PRODUCTO','UNIDAD DE MEDIDA','SEDE','MOTIVO DE MERMA','CANTIDAD DEL MOTIVO DE MERMA','NUMERO DE LOTE','RESPONSABLE'];
        ensureHeader(sh, header);
        const fecha=params.fecha||'', sede=params.sede||'', motivo=params.motivo||'', lote=params.lote||'', responsable=params.responsable||'';
-       if(productos.length){ productos.forEach(p=> rows.push([marca, fecha, p.descripcion||p.codigo||'', p.unidad||'', sede, motivo, toNumber(p.cantidad), lote, responsable, p.codigo||''])); }
-       else rows.push([marca, fecha,'','',sede,motivo,0,lote,responsable,'']);
+       if(productos.length){ productos.forEach(p=> rows.push([marca, fecha, p.codigo||'', p.descripcion||p.codigo||'', p.unidad||'', sede, motivo, toNumber(p.cantidad), lote, responsable])); }
+       else rows.push([marca, fecha,'','','',sede,motivo,0,lote,responsable]);
    }
    if(rows.length){ sh.getRange(sh.getLastRow()+1,1,rows.length,rows[0].length).setValues(rows); }
    return respond({ ok:true, inserted: rows.length, nonce });

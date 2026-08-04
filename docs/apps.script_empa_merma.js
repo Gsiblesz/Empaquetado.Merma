@@ -1,5 +1,5 @@
 // ====== CONFIG ======
-const SPREADSHEET_ID = '1mrBkcP3Wz04KfBxmNXP0tn6GI645lKctT095uW43ezw';
+const SPREADSHEET_ID = '1KR29IaMGRvHjVdgGLxDiJm6vx7gckUSor-LmqUI3Ej8';
 const SHEETS = { Empaquetado: 'EMPAQUETADO', Merma: 'MERMA' };
 
 const PRODUCT_SHEET = 'PRODUCTOS';
@@ -9,7 +9,7 @@ const ADMIN_KEY = 'PASANTIAS90';
 const TZ = 'America/Caracas';
 const NONCE_TTL_SECONDS = 3600;
 const PRODUCT_CACHE_SECONDS = 60;
-const APP_VERSION = '2026-08-04-codigo-producto-v2';
+const APP_VERSION = '2026-08-04-spreadsheet-correcto-codigo-antes-producto';
 
 // ====== HTTP ======
 function doGet(e) {
@@ -57,6 +57,7 @@ function doPost(e) {
         'Marca temporal',
         'DIRECCION',
         'FECHA',
+        'CODIGO',
         'PRODUCTO',
         'CANTIDAD',
         'ENTREGADO A',
@@ -65,9 +66,9 @@ function doPost(e) {
         'SEDE',
         'FORMULA 1',
         'FORMULA 2',
-        'NUMERO DE LOTE',
-        'CODIGO'
+        'NUMERO DE LOTE'
       ];
+  ensureColumnBeforeHeader(sh, 'CODIGO', 'PRODUCTO');
   const colCount = ensureHeaderFull(sh, desiredHeader);
   normalizeTables(sh, desiredHeader);
   writeCols = desiredHeader.length;
@@ -87,6 +88,7 @@ function doPost(e) {
             marcaTemporal,
             direccionValor,
             fecha,
+            it.codigo || '',
             it.descripcion || it.codigo || '',
             toNumber(it.cantidad),
             entregado,
@@ -95,21 +97,20 @@ function doPost(e) {
             sede,
             '',
             '',
-            loteItem || '',
-            it.codigo || ''
+            loteItem || ''
           ];
           rows.push(fitRow(r, writeCols));
         });
       } else {
-        let r = [marcaTemporal, direccionValor, fecha, '', 0, entregado, registro, responsable, sede, '', '', '', ''];
+        let r = [marcaTemporal, direccionValor, fecha, '', '', 0, entregado, registro, responsable, sede, '', '', ''];
         rows.push(fitRow(r, writeCols));
       }
 
       // Construir Entradas09 desde las filas ya armadas (mismo dato que EMPAQUETADO)
       entradasRows = rows.map(r => {
-        const loteVal = r[11] || '';
-        const prodVal = r[3] || '';
-        const cantVal = toNumber(r[4]);
+        const loteVal = r[12] || '';
+        const prodVal = r[4] || '';
+        const cantVal = toNumber(r[5]);
         const fechaVal = r[2] || '';
         return [loteVal, prodVal, cantVal, fechaVal];
       });
@@ -118,15 +119,16 @@ function doPost(e) {
       const desiredHeader = [
         'Marca Temporal',
         'FECHA',
+        'CODIGO',
         'PRODUCTO',
         'UNIDAD DE MEDIDA',
         'SEDE',
         'MOTIVO DE MERMA',
         'CANTIDAD DEL MOTIVO DE MERMA',
         'NUMERO DE LOTE',
-        'RESPONSABLE',
-        'CODIGO'
+        'RESPONSABLE'
       ];
+  ensureColumnBeforeHeader(sh, 'CODIGO', 'PRODUCTO');
   const colCount = ensureHeaderFull(sh, desiredHeader);
   writeCols = desiredHeader.length;
 
@@ -154,19 +156,19 @@ function doPost(e) {
           var r = [
             marcaTemporal,
             fecha,
+            it && it.codigo ? it.codigo : '',
             descripcionVal,
             unidadVal,
             sede,
             motivoItem,
             cantidadVal,
             loteItem,
-            responsable,
-            it && it.codigo ? it.codigo : ''
+            responsable
           ];
           rows.push(fitRow(r, writeCols));
         });
       } else {
-        var r = [marcaTemporal, fecha, '', '', sede, motivoGlobal, 0, loteGlobal, responsable, ''];
+        var r = [marcaTemporal, fecha, '', '', '', sede, motivoGlobal, 0, loteGlobal, responsable];
         rows.push(fitRow(r, writeCols));
       }
     }
@@ -400,6 +402,36 @@ function hydrateProductos(productos, params){
 }
 
 // Encabezado robusto: rellena vacíos y extiende hasta el total de columnas usadas por la hoja.
+function normalizeHeaderName_(value){
+  return String(value || '').trim().toUpperCase();
+}
+
+function ensureColumnBeforeHeader(sh, columnHeader, beforeHeader){
+  const lastCol = Math.max(sh.getLastColumn(), 1);
+  const headers = sh.getRange(1, 1, 1, lastCol).getValues()[0];
+  const wanted = normalizeHeaderName_(columnHeader);
+  const before = normalizeHeaderName_(beforeHeader);
+  const beforeIdx = headers.findIndex(h => normalizeHeaderName_(h) === before);
+  if (beforeIdx < 0) return;
+
+  const currentIdx = headers.findIndex(h => normalizeHeaderName_(h) === wanted);
+  if (currentIdx === beforeIdx - 1) return;
+
+  sh.insertColumnBefore(beforeIdx + 1);
+  const insertedCol = beforeIdx + 1;
+  sh.getRange(1, insertedCol).setValue(columnHeader);
+
+  if (currentIdx >= 0) {
+    const lastRow = Math.max(sh.getLastRow(), 1);
+    const oldColAfterInsert = currentIdx >= beforeIdx ? currentIdx + 2 : currentIdx + 1;
+    if (lastRow > 1) {
+      const values = sh.getRange(2, oldColAfterInsert, lastRow - 1, 1).getValues();
+      sh.getRange(2, insertedCol, values.length, 1).setValues(values);
+    }
+    sh.getRange(1, oldColAfterInsert).setValue('Col_' + oldColAfterInsert);
+  }
+}
+
 function ensureHeaderFull(sh, desired){
   const colCount = Math.max(sh.getLastColumn(), desired.length, 1);
   const existing = colCount ? sh.getRange(1,1,1,colCount).getValues()[0] : [];
@@ -524,18 +556,20 @@ function postMerma_(payload) {
       return respond({ ok: true, duplicate: true, nonce: payload.nonce });
     }
     const sheet = getSheet_(SHEETS.Merma);
-    const colCount = ensureHeaderFull(sheet, [
+    const desiredHeader = [
       'Marca Temporal',
       'FECHA',
+      'CODIGO',
       'PRODUCTO',
       'UNIDAD DE MEDIDA',
       'SEDE',
       'MOTIVO DE MERMA',
       'CANTIDAD DEL MOTIVO DE MERMA',
       'NUMERO DE LOTE',
-      'RESPONSABLE',
-      'CODIGO'
-    ]);
+      'RESPONSABLE'
+    ];
+    ensureColumnBeforeHeader(sheet, 'CODIGO', 'PRODUCTO');
+    const colCount = ensureHeaderFull(sheet, desiredHeader);
 
     const fecha = payload.fecha || '';
     const sede = payload.sede || payload.empresa || '';
@@ -554,14 +588,14 @@ function postMerma_(payload) {
       return [
         Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HH:mm:ss'),
         fecha,
+        it.codigo || '',
         it.descripcion || it.codigo || '',
         it.unidad || '',
         sede,
         motivoItem,
         toNumber(it.cantidad),
         loteItem,
-        responsable,
-        it.codigo || ''
+        responsable
       ];
     });
 
