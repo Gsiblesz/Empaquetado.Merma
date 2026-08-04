@@ -44,7 +44,7 @@ function doPost(e) {
     // Mantener tablas pero asegurar encabezados válidos
     normalizeTables(sh, null);
 
-    const productos = parseProductos(params.productos_json);
+    const productos = hydrateProductos(parseProductos(params.productos_json), params);
     const marcaTemporal = Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HH:mm:ss');
 
   let rows = [];
@@ -61,11 +61,15 @@ function doPost(e) {
         'ENTREGADO A',
         'NUMERO REGISTRO',
         'RESPONSABLE',
-        'SEDE'
+        'SEDE',
+        'FORMULA 1',
+        'FORMULA 2',
+        'NUMERO DE LOTE',
+        'CODIGO'
       ];
   const colCount = ensureHeaderFull(sh, desiredHeader);
   normalizeTables(sh, desiredHeader);
-  writeCols = colCount;
+  writeCols = desiredHeader.length;
 
       const fecha = params.fecha || '';
       const entregado = params.entregado || '';
@@ -87,17 +91,17 @@ function doPost(e) {
             entregado,
             registro,
             responsable,
-            sede
+            sede,
+            '',
+            '',
+            loteItem || '',
+            it.codigo || ''
           ];
-          if (r.length < colCount) {
-            while (r.length < colCount) r.push('.');
-          }
-          rows.push(r);
+          rows.push(fitRow(r, writeCols));
         });
       } else {
-        let r = [marcaTemporal, direccionValor, fecha, '', 0, entregado, registro, responsable, sede];
-        while (r.length < colCount) r.push('.');
-        rows.push(r);
+        let r = [marcaTemporal, direccionValor, fecha, '', 0, entregado, registro, responsable, sede, '', '', '', ''];
+        rows.push(fitRow(r, writeCols));
       }
 
       // Construir Entradas09 desde las filas ya armadas (mismo dato que EMPAQUETADO)
@@ -119,10 +123,11 @@ function doPost(e) {
         'MOTIVO DE MERMA',
         'CANTIDAD DEL MOTIVO DE MERMA',
         'NUMERO DE LOTE',
-        'RESPONSABLE'
+        'RESPONSABLE',
+        'CODIGO'
       ];
   const colCount = ensureHeaderFull(sh, desiredHeader);
-  writeCols = colCount;
+  writeCols = desiredHeader.length;
 
       const fecha = params.fecha || '';
       const sede = params.sede || params.empresa || '';
@@ -154,15 +159,14 @@ function doPost(e) {
             motivoItem,
             cantidadVal,
             loteItem,
-            responsable
+            responsable,
+            it && it.codigo ? it.codigo : ''
           ];
-          while (r.length < colCount) r.push('.');
-          rows.push(r);
+          rows.push(fitRow(r, writeCols));
         });
       } else {
-        var r = [marcaTemporal, fecha, '', '', sede, motivoGlobal, 0, loteGlobal, responsable];
-        while (r.length < colCount) r.push('.');
-        rows.push(r);
+        var r = [marcaTemporal, fecha, '', '', sede, motivoGlobal, 0, loteGlobal, responsable, ''];
+        rows.push(fitRow(r, writeCols));
       }
     }
 
@@ -371,6 +375,28 @@ function toNumber(n){
   const v = Number(n);
   return isFinite(v) && v > 0 ? v : 0;
 }
+function fitRow(row, targetLen){
+  const out = Array.isArray(row) ? row.slice(0, targetLen) : [];
+  while (out.length < targetLen) out.push('.');
+  if (out.length > targetLen) out.length = targetLen;
+  return out;
+}
+function hydrateProductos(productos, params){
+  const arr = Array.isArray(productos) ? productos.slice() : [];
+  const countRaw = params && params.productos_count;
+  const count = parseInt(countRaw, 10);
+  if (!isFinite(count) || count <= 0) return arr;
+  for (let i = 0; i < count; i++){
+    const motivo = params['motivo_'+i] ? String(params['motivo_'+i]).trim() : '';
+    const lote = params['lote_'+i] ? String(params['lote_'+i]).trim() : '';
+    const codigo = params['prodCodigo_'+i] ? String(params['prodCodigo_'+i]).trim() : '';
+    if (!arr[i]) arr[i] = {};
+    if (motivo && !arr[i].motivo) arr[i].motivo = motivo;
+    if (lote && !arr[i].lote) arr[i].lote = lote;
+    if (codigo && !arr[i].codigo) arr[i].codigo = codigo;
+  }
+  return arr;
+}
 
 // Encabezado robusto: rellena vacíos y extiende hasta el total de columnas usadas por la hoja.
 function ensureHeaderFull(sh, desired){
@@ -447,7 +473,7 @@ function postMerma_(payload) {
       return respond({ ok: true, duplicate: true, nonce: payload.nonce });
     }
     const sheet = getSheet_(SHEETS.Merma);
-    const { colCount } = ensureHeaderFull(sheet, [
+    const colCount = ensureHeaderFull(sheet, [
       'Marca Temporal',
       'FECHA',
       'PRODUCTO',
@@ -456,7 +482,8 @@ function postMerma_(payload) {
       'MOTIVO DE MERMA',
       'CANTIDAD DEL MOTIVO DE MERMA',
       'NUMERO DE LOTE',
-      'RESPONSABLE'
+      'RESPONSABLE',
+      'CODIGO'
     ]);
 
     const fecha = payload.fecha || '';
@@ -482,7 +509,8 @@ function postMerma_(payload) {
         motivoItem,
         toNumber(it.cantidad),
         loteItem,
-        responsable
+        responsable,
+        it.codigo || ''
       ];
     });
 

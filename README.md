@@ -65,7 +65,7 @@ git push -u origin main
 - Abre `docs/menu.html` y entra a cada formulario.
 - Completa datos mínimos.
 - Agrega un par de productos y cantidades.
-- Envía y confirma que aparecen filas en las pestañas Empaquetado/Merma de tu hoja.
+- Envía y confirma que aparecen filas en las pestañas Empaquetado/Merma de tu hoja, incluyendo la columna `CODIGO`.
 
 ## Gestión de Productos (Catálogo)
 
@@ -143,17 +143,17 @@ function doPost(e){
    const marca = Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HH:mm:ss');
    let rows=[];
    if(sheetKey==='Empaquetado'){
-       const header=['Marca temporal','FECHA','PRODUCTO','CANTIDAD','ENTREGADO A','NUMERO REGISTRO','RESPONSABLE','SEDE'];
+       const header=['Marca temporal','FECHA','PRODUCTO','CANTIDAD','ENTREGADO A','NUMERO REGISTRO','RESPONSABLE','SEDE','CODIGO'];
        ensureHeader(sh, header);
        const fecha=params.fecha||'', entregado=params.entregado||'', registro=params.registro||'', responsable=params.responsable||'', sede=params.sede||'';
-       if(productos.length){ productos.forEach(p=> rows.push([marca, fecha, p.descripcion||p.codigo||'', toNumber(p.cantidad), entregado, registro, responsable, sede])); }
-       else rows.push([marca, fecha,'',0,entregado,registro,responsable,sede]);
+       if(productos.length){ productos.forEach(p=> rows.push([marca, fecha, p.descripcion||p.codigo||'', toNumber(p.cantidad), entregado, registro, responsable, sede, p.codigo||''])); }
+       else rows.push([marca, fecha,'',0,entregado,registro,responsable,sede,'']);
    } else if(sheetKey==='Merma') {
-       const header=['Marca Temporal','FECHA','PRODUCTO','UNIDAD DE MEDIDA','SEDE','MOTIVO DE MERMA','CANTIDAD DEL MOTIVO DE MERMA','NUMERO DE LOTE','RESPONSABLE'];
+       const header=['Marca Temporal','FECHA','PRODUCTO','UNIDAD DE MEDIDA','SEDE','MOTIVO DE MERMA','CANTIDAD DEL MOTIVO DE MERMA','NUMERO DE LOTE','RESPONSABLE','CODIGO'];
        ensureHeader(sh, header);
        const fecha=params.fecha||'', sede=params.sede||'', motivo=params.motivo||'', lote=params.lote||'', responsable=params.responsable||'';
-       if(productos.length){ productos.forEach(p=> rows.push([marca, fecha, p.descripcion||p.codigo||'', p.unidad||'', sede, motivo, toNumber(p.cantidad), lote, responsable])); }
-       else rows.push([marca, fecha,'','',sede,motivo,0,lote,responsable]);
+       if(productos.length){ productos.forEach(p=> rows.push([marca, fecha, p.descripcion||p.codigo||'', p.unidad||'', sede, motivo, toNumber(p.cantidad), lote, responsable, p.codigo||''])); }
+       else rows.push([marca, fecha,'','',sede,motivo,0,lote,responsable,'']);
    }
    if(rows.length){ sh.getRange(sh.getLastRow()+1,1,rows.length,rows[0].length).setValues(rows); }
    return respond({ ok:true, inserted: rows.length, nonce });
@@ -217,7 +217,7 @@ function respond(obj){ return ContentService.createTextOutput(JSON.stringify(obj
 | Ping      | GET    | `?ping=test`                                                   | `{ ok:true, pong:"test" }`       |
 | Recent    | GET    | `?action=recent&sheet=Empaquetado&limit=20`                    | `{ ok:true, rows:[...], ... }`   |
 | Agregar   | POST   | `action=addProduct`, `codigo`, `descripcion`, `unidad`, `adminKey` | `{ ok:true, inserted:1 }`        |
-| Formulario| POST   | Campos + `sheet=Empaquetado|Merma` + `productos_json` + `nonce` | `{ ok:true, inserted:n }`        |
+| Formulario| POST   | Campos + `sheet=Empaquetado|Merma` + `productos_json` con `codigo` + `nonce` | `{ ok:true, inserted:n }`        |
 
 Nota: `adminKey` es comprobada en el backend; cámbiala si lo deseas en ambos lados.
 

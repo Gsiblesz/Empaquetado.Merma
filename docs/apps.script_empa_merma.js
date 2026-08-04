@@ -64,7 +64,8 @@ function doPost(e) {
         'SEDE',
         'FORMULA 1',
         'FORMULA 2',
-        'NUMERO DE LOTE'
+        'NUMERO DE LOTE',
+        'CODIGO'
       ];
   const colCount = ensureHeaderFull(sh, desiredHeader);
   normalizeTables(sh, desiredHeader);
@@ -93,12 +94,13 @@ function doPost(e) {
             sede,
             '',
             '',
-            loteItem || ''
+            loteItem || '',
+            it.codigo || ''
           ];
           rows.push(fitRow(r, writeCols));
         });
       } else {
-        let r = [marcaTemporal, direccionValor, fecha, '', 0, entregado, registro, responsable, sede, '', '', ''];
+        let r = [marcaTemporal, direccionValor, fecha, '', 0, entregado, registro, responsable, sede, '', '', '', ''];
         rows.push(fitRow(r, writeCols));
       }
 
@@ -121,7 +123,8 @@ function doPost(e) {
         'MOTIVO DE MERMA',
         'CANTIDAD DEL MOTIVO DE MERMA',
         'NUMERO DE LOTE',
-        'RESPONSABLE'
+        'RESPONSABLE',
+        'CODIGO'
       ];
   const colCount = ensureHeaderFull(sh, desiredHeader);
   writeCols = desiredHeader.length;
@@ -156,12 +159,13 @@ function doPost(e) {
             motivoItem,
             cantidadVal,
             loteItem,
-            responsable
+            responsable,
+            it && it.codigo ? it.codigo : ''
           ];
           rows.push(fitRow(r, writeCols));
         });
       } else {
-        var r = [marcaTemporal, fecha, '', '', sede, motivoGlobal, 0, loteGlobal, responsable];
+        var r = [marcaTemporal, fecha, '', '', sede, motivoGlobal, 0, loteGlobal, responsable, ''];
         rows.push(fitRow(r, writeCols));
       }
     }
@@ -519,7 +523,7 @@ function postMerma_(payload) {
       return respond({ ok: true, duplicate: true, nonce: payload.nonce });
     }
     const sheet = getSheet_(SHEETS.Merma);
-    const { colCount } = ensureHeaderFull(sheet, [
+    const colCount = ensureHeaderFull(sheet, [
       'Marca Temporal',
       'FECHA',
       'PRODUCTO',
@@ -528,7 +532,8 @@ function postMerma_(payload) {
       'MOTIVO DE MERMA',
       'CANTIDAD DEL MOTIVO DE MERMA',
       'NUMERO DE LOTE',
-      'RESPONSABLE'
+      'RESPONSABLE',
+      'CODIGO'
     ]);
 
     const fecha = payload.fecha || '';
@@ -554,7 +559,8 @@ function postMerma_(payload) {
         motivoItem,
         toNumber(it.cantidad),
         loteItem,
-        responsable
+        responsable,
+        it.codigo || ''
       ];
     });
 
