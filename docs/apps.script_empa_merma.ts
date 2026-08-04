@@ -9,14 +9,15 @@ const ADMIN_KEY = 'PASANTIAS90';
 const TZ = 'America/Caracas';
 const NONCE_TTL_SECONDS = 3600;
 const PRODUCT_CACHE_SECONDS = 60;
+const APP_VERSION = '2026-08-04-codigo-producto-v2';
 
 // ====== HTTP ======
 function doGet(e) {
   const p = (e && e.parameter) || {};
-  if (p.ping) return respond({ ok: true, pong: String(p.ping), version: '2025-11-13' });
+  if (p.ping) return respond({ ok: true, pong: String(p.ping), version: APP_VERSION });
   if (String(p.action || '') === 'recent') return recentEndpoint(String(p.sheet||'').trim(), clampLimit(p.limit));
   if (String(p.action || '') === 'productos') return getProductosEndpoint();
-  return respond({ ok: true, version: '2025-11-13' });
+  return respond({ ok: true, version: APP_VERSION });
 }
 
 function doPost(e) {
@@ -35,7 +36,7 @@ function doPost(e) {
 
     const nonce = (params.nonce || '').trim();
     if (nonce && isDuplicateNonce(nonce)) {
-      return respond({ ok:true, duplicate:true, nonce });
+      return respond({ ok:true, duplicate:true, nonce, version: APP_VERSION });
     }
 
     const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
@@ -199,7 +200,7 @@ function doPost(e) {
       if (nonce) storeNonce(nonce);
     }
 
-    return respond({ ok:true, inserted: rows.length, nonce });
+    return respond({ ok:true, inserted: rows.length, nonce, version: APP_VERSION });
   } catch(err) {
     const msg = String(err && (err as any).message || err);
     if (msg.indexOf('encabezado') !== -1) {

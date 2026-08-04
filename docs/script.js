@@ -368,22 +368,24 @@ function enviarFormulario(formId, url) {
         .then(async (response) => {
             let txt;
             try { txt = await response.text(); } catch(_) { txt = ''; }
-            let ok = response.ok;
+            let ok = false;
             let duplicate = false;
             let errorMsg = '';
             let parsed = null;
             try {
                 parsed = JSON.parse(txt);
-                if (parsed.ok !== undefined) ok = parsed.ok;
+                ok = parsed.ok === true;
                 duplicate = !!parsed.duplicate;
                 if (!ok && parsed.error) errorMsg = parsed.error;
             } catch(e) {
-                // texto no JSON; mantener valores por defecto
+                errorMsg = txt
+                    ? 'Respuesta no JSON del servidor. Revisa que la URL de Apps Script apunte al Web App publicado.'
+                    : 'Respuesta vacia del servidor. Revisa la URL de Apps Script o el despliegue publicado.';
             }
             // Log detallado para depuración
             try { console.log('[ENVIAR_FORM]', formId, 'status:', response.status, 'okFlag:', ok, 'duplicate:', duplicate, 'raw:', txt); } catch(_) {}
-            // Consideramos éxito también si la respuesta es no legible pero status 200 (opaque redirect no-cors)
-            if (ok || response.status === 0) {
+            // Solo confirmar exito cuando Apps Script devuelve JSON con ok:true.
+            if (ok) {
                 if (formId === "empaquetados-form" && isBackendApiUrl(BACKEND_URL)) {
                     try {
                         const backendResult = await registrarLoteBackend(seleccionados, loteGlobal);
@@ -399,10 +401,10 @@ function enviarFormulario(formId, url) {
                         msgEl.textContent = "Registro ya existente (deduplicado).";
                     } else if (formId === "empaquetados-form") {
                         msgEl.textContent = backendSyncStatus === 'ok'
-                            ? "¡Formulario enviado! Registro disponible para validación en Almacen09."
-                            : "¡Formulario enviado! Verifica sincronización con Almacen09.";
+                            ? "Formulario enviado. Registro guardado en Sheets y disponible para validacion en Almacen09."
+                            : "Formulario enviado. Registro guardado en Sheets; verifica sincronizacion con Almacen09.";
                     } else {
-                        msgEl.textContent = "¡Formulario enviado correctamente!";
+                        msgEl.textContent = "Formulario enviado. Registro guardado en Sheets.";
                     }
                 }
                 // Disparar evento para página de registros
@@ -424,7 +426,10 @@ function enviarFormulario(formId, url) {
                 if (!errorMsg && parsed && !parsed.ok && !parsed.error) {
                     errorMsg = 'Error desconocido (respuesta JSON sin ok=true).';
                 }
-                if (!errorMsg && !parsed && response.status !== 200) {
+                if (!errorMsg && !parsed) {
+                    errorMsg = 'HTTP '+response.status+' sin JSON de confirmacion.';
+                }
+                if (!errorMsg && response.status !== 200) {
                     errorMsg = 'HTTP '+response.status+' sin detalle del servidor.';
                 }
                 let debugMsg = '';
@@ -442,8 +447,8 @@ function enviarFormulario(formId, url) {
             }
         })
         .catch(error => {
-            // Fallback: asumimos que puede haber sido un bloqueo de lectura pero el backend insertó la fila.
-            if (msgEl) msgEl.textContent = "Posible envío exitoso (respuesta no legible). Verifica en la hoja. Si falta, reintenta.";
+            // Conserva los datos para que el usuario pueda reintentar sin perder la seleccion.
+            if (msgEl) msgEl.textContent = "No se pudo confirmar el envio. Revisa la conexion y reintenta; no se limpiaron los datos.";
             try { console.error('[ENVIAR_FORM][ERROR]', formId, error); } catch(_) {}
             // No limpiamos por si realmente no llegó; conservamos nonce para reintentar.
         })
